@@ -180,7 +180,10 @@ const current = (href: string) => (root(href) === section ? 'page' : undefined);
         --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
-        --shell: 1116px;
+        /* 1150 rather than 1116 so the capability card title "Custom
+           architecture and training" (298px of Fraunces) fits on one line
+           once the shell reaches its full width. */
+        --shell: 1150px;
         /* Resting nav height including its bottom border. The hero
            subtracts this to land on exactly one viewport. */
         --nav-h: 62.2px;

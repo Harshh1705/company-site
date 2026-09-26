@@ -3,25 +3,25 @@ import V2Layout from '@/layouts/V2Layout.astro';
 
 const capabilities = [
   {
-    name: 'Synthetic Data Generation',
+    name: 'Synthetic data generation',
     backdrop: 'sdTarget',
     seed: 4021,
     summary:
-      'We build pipelines that produce exactly the distribution your model is missing — curriculum-controlled, deduplicated, and verified against the real task rather than against a prompt template. Millions of samples, shipped with the generation code, the filter criteria and a coverage report, so you can audit what went into the run instead of trusting it.',
+      'Over the years we have generated hundreds of billions of tokens of synthetic data and trained models on it. More than half our projects need a pipeline built for that specific data, with our open-source library Simula covering part of the work. Every dataset ships with its generation code, filters and coverage report.',
   },
   {
-    name: 'Custom Architecture & Training',
+    name: 'Custom architecture and training',
     backdrop: 'archLoss',
     seed: 9137,
     summary:
-      'When the off-the-shelf model is the wrong shape, we design one that is not: modified attention, task-native tokenizers, reworked objectives, and the kernels to make them run fast. Continued pretraining through post-training, on your compute, with every checkpoint and hyperparameter decision documented and handed over.',
+      'LLMs are not always the right tool, and API models cannot always be made to fit. We design and train models around the task, with modified attention and custom kernels where needed, and optimize them to run small and fast, like Qwen3-8B pruned from 36 layers to 30.',
   },
   {
-    name: 'Evaluation & Benchmarking',
+    name: 'Evaluation and benchmarking',
     backdrop: 'evalBars',
     seed: 2288,
     summary:
-      'Public benchmarks rarely measure the thing you are actually paid for. We build the evaluation your problem needs — task-specific suites, adversarial probes and regression harnesses wired into CI — then run it honestly, including the results that argue against the model we just trained for you.',
+      "What we build is used by our clients' customers, so every project starts with evaluation. We learn the domain, build a benchmark for it, and measure every change against that baseline. We run the evaluations by hand and read the outputs ourselves.",
   },
 ];
 
@@ -166,12 +166,10 @@ const tooling = [
   <!-- ═══ WHAT WE WORK ON ════════════════════════════════════════ -->
   <section class="band" id="work">
     <div class="shell">
-      <span class="eyebrow rv" data-rv>What we work on</span>
-      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Three things, and we do all three at depth.</h2>
-      <p class="lede rv" data-rv style="--rv-delay:160ms">
-        Not a service menu. These are the three problems we have run at scale often enough to have opinions
-        about, and they compose into a single pipeline: generate the data nobody has, train the model nobody
-        sells, then prove it actually works.
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Where our expertise lies</h2>
+      <p class="lede lede-split rv" data-rv style="--rv-delay:160ms">
+        <span>We keep to a narrow set of problems and try to be the best at each of them.</span>
+        <span>The three below are where most of our client work and our published research has gone over the years.</span>
       </p>
 
       <div class="cap-grid">
@@ -499,6 +497,16 @@ const tooling = [
   }
 
   /* ── Capabilities ───────────────────────────────────────────── */
+  /* One sentence per line. The second runs about 728px, past the
+     62ch lede cap, so this lede gets room for it on desktop; narrower
+     screens wrap each sentence evenly instead of stranding a word. */
+  .lede.lede-split {
+    max-width: 760px;
+  }
+  .lede-split span {
+    display: block;
+    text-wrap: balance;
+  }
   .cap-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

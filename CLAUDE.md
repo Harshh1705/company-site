@@ -120,7 +120,7 @@ The headline is upright, one colour, and breaks to two rows via
 longer half does not fit the container it wraps again and you get four lines,
 not two. The size cap is what makes two rows possible — at the current
 `clamp(35.2px, 5.39vw, 63.8px)` the longer line runs about 1040px against
-roughly 1079px of available width, so it is close. If it tips to three lines,
+roughly 1113px of available width (`--shell` is 1150px), so it is close. If it tips to three lines,
 either drop the cap a few px or let the hero break out of `--shell` to a wider
 measure.
 
