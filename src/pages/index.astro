@@ -1,5 +1,11 @@
 ---
+import { getCollection } from 'astro:content';
 import V2Layout from '@/layouts/V2Layout.astro';
+
+// Counted at build, as on the About page, so the Research card's figure
+// stays true as posts are added.
+const writeups = [...(await getCollection('posts')), ...(await getCollection('research'))];
+const firstYear = Math.min(...writeups.map((e) => e.data.publishedAt.getFullYear()));
 
 const capabilities = [
   {
@@ -7,7 +13,7 @@ const capabilities = [
     backdrop: 'sdTarget',
     seed: 4021,
     summary:
-      'Over the years we have generated hundreds of billions of tokens of synthetic data and trained models on it. More than half our projects need a pipeline built for that specific data, with our open-source library Simula covering part of the work. Every dataset ships with its generation code, filters and coverage report.',
+      'Over the years we have generated hundreds of billions of tokens of synthetic data and trained models on it. More than half our projects need a pipeline built for that specific data, with our open\u2011source library Simula covering part of the work. Every dataset ships with its generation code, filters and coverage report.',
   },
   {
     name: 'Custom architecture and training',
@@ -48,6 +54,8 @@ const personas = [
   },
 ];
 
+// \u2011 and \u00a0 in the summaries keep compound terms from splitting
+// across lines. An array summary breaks onto a new line between entries.
 const openWork = [
   {
     name: 'Datasets',
@@ -60,10 +68,12 @@ const openWork = [
       top: '23%',
       width: '140%',
     },
-    meta: '14 releases · HuggingFace',
-    href: '/open-source/simula',
+    // Public repos under huggingface.co/Mercity as of 2026-09-27, not
+    // counting the one named "test". Update by hand as sets are added.
+    meta: '12 datasets · Hugging Face',
+    href: 'https://huggingface.co/datasets?author=Mercity',
     summary:
-      'Curated and synthetic corpora released with the generation code, the filtering criteria and the failure modes we already know about — so you can judge whether a set fits your problem before you spend a training run finding out.',
+      'Pretraining corpora, embedding sets and labelled data for specialised tasks, built for our own training and research. We publish them on Hugging\u00a0Face so anyone can use them.',
   },
   {
     name: 'Models',
@@ -77,10 +87,11 @@ const openWork = [
       width: '141.3%',
       bakedShadow: true,
     },
-    meta: '9 checkpoints · Apache-2.0',
-    href: '/open-source/simula',
+    // Public repos under huggingface.co/Mercity as of 2026-09-27.
+    meta: '26 models · Hugging Face',
+    href: 'https://huggingface.co/models?author=Mercity',
     summary:
-      'Checkpoints, adapters and complete training recipes from experiments we think are worth reproducing — published with the evaluation numbers that convinced us to keep them, and the ablations that did not make the cut.',
+      'Pruned and distilled models, adapters, classifiers and fine\u2011tuned retrieval models from our research runs. We publish them alongside our write\u2011ups so anyone can check the results.',
   },
   {
     name: 'Research',
@@ -97,10 +108,10 @@ const openWork = [
       width: '125.9%',
       bakedShadow: true,
     },
-    meta: '30+ write-ups · Updated weekly',
+    meta: `${writeups.length} write-ups · Since ${firstYear}`,
     href: '/research',
     summary:
-      'Long-form write-ups of what worked, what did not, and the specific reason why — implementation detail included, because that is reliably the part every other post leaves out and the part you need in order to reproduce it.',
+      'Research logs and guides written from our own projects, with the implementation detail you need to reproduce the work. Recent logs cover layer pruning, diffusion distillation, SAE guardrails and Simula.',
   },
 ];
 
@@ -110,7 +121,7 @@ const tooling = [
     kind: 'Python',
     href: '/open-source/simula',
     summary:
-      'Deliberate synthetic data generation. Describe the distribution you want as a spec, and Simula plans, generates and verifies a corpus against it.',
+      'Deliberate synthetic data generation. Describe the distribution you want as a spec, and Simula plans, generates and verifies a corpus against it, with a coverage report at the end.',
   },
   {
     name: 'PromptKeep',
@@ -239,12 +250,17 @@ const tooling = [
     <div class="shell">
       <div class="open-head">
         <div class="open-head-copy">
-          <span class="eyebrow rv" data-rv>Open source</span>
+          <span class="eyebrow rv" data-rv>
+            We <span class="eyebrow-heart" role="img" aria-label="love">&#x2764;&#xFE0F;</span> open source
+          </span>
           <h2 class="h2 rv" data-rv style="--rv-delay:80ms">We ship openly, and in public.</h2>
-          <p class="lede rv" data-rv style="--rv-delay:160ms">
-            Most of what we learn on client work ends up public in some form. Datasets we had to build because
-            nothing suitable existed, weights from runs worth reproducing, and write-ups detailed enough that
-            you could follow them end to end. Take it, fork it, and tell us where we got it wrong.
+          <p class="lede lede-split rv" data-rv style="--rv-delay:160ms">
+            <span>We are a research-first firm and do our work in the open.</span>
+            <span>Most of what we learn ends up public in some form.</span>
+          </p>
+          <p class="lede lede-split rv" data-rv style="--rv-delay:200ms">
+            <span>Datasets we had to build because nothing suitable existed, weights from runs that cost us thousands of&nbsp;$, and fully detailed write&#8209;ups so anyone can replicate our work.</span>
+            <span>We also partner with other companies on their open&#8209;source initiatives.</span>
           </p>
         </div>
         <a class="wipe rv" data-rv style="--rv-delay:240ms" href="/open-source/simula">
@@ -272,7 +288,7 @@ const tooling = [
               </div>
               <div class="open-body">
                 <h3>{o.name}</h3>
-                <p>{o.summary}</p>
+                <p>{[o.summary].flat().map((line, j) => (j ? [<br />, line] : line))}</p>
                 <span class="open-meta">{o.meta}</span>
               </div>
             </a>
@@ -285,14 +301,12 @@ const tooling = [
   <!-- ═══ TOOLING ════════════════════════════════════════════════ -->
   <section class="band band-tint" id="tooling">
     <div class="shell">
-      <span class="eyebrow rv" data-rv>Tooling</span>
       <h2 class="h2 rv" data-rv style="--rv-delay:80ms">
-        Alongside the data and the weights, we open the tools.
+        Alongside the data and weights, we open&#8209;source our tools.
       </h2>
-      <p class="lede rv" data-rv style="--rv-delay:160ms">
-        Nearly all of this started as something we needed internally and got tired of rewriting for the next
-        engagement. It stays maintained because we run on it ourselves — the same libraries are in the loop on
-        client projects the week they ship.
+      <p class="lede lede-split rv" data-rv style="--rv-delay:160ms">
+        <span>Each one started as something we needed internally and got tired of rewriting for every project.</span>
+        <span>They stay maintained because we run them on our own client work.</span>
       </p>
 
       <div class="tool-grid">
@@ -335,9 +349,9 @@ const tooling = [
     <canvas class="closer-bg" data-backdrop="strata" data-seed="4488" data-dpr="1.2" aria-hidden="true"></canvas>
     <div class="shell closer-in">
       <h2 class="rv" data-rv>Bring us the problem that does not fit the API.</h2>
-      <p class="rv" data-rv style="--rv-delay:120ms">
-        If an off-the-shelf model already solves it, you do not need us. If it nearly solves it and the last
-        fifteen percent is the whole business, that is the conversation we want.
+      <p class="lede-split rv" data-rv style="--rv-delay:120ms">
+        <span>If an off&#8209;the&#8209;shelf model already solves it, you do not need us.</span>
+        <span>If it gets you most of the way and the rest is what your business depends on, we should talk.</span>
       </p>
       <a class="btn-light rv" data-rv style="--rv-delay:240ms" href="/contact">
         Start a conversation<span aria-hidden="true">→</span>
@@ -715,6 +729,14 @@ const tooling = [
     flex: 1 1 30rem;
     min-width: 0;
   }
+  .open-head-copy .lede + .lede {
+    margin-top: 12px;
+  }
+  /* The red emoji heart (U+2764 U+FE0F), sized up from the 9px caps. */
+  .eyebrow-heart {
+    font-size: 1.3em;
+    line-height: 1;
+  }
   .open-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -770,7 +792,12 @@ const tooling = [
   .open-art-img.is-baked {
     filter: none;
   }
+  /* Body fills the card and its copy takes up any height difference,
+     so the meta lines sit level when one card's copy runs longer. */
   .open-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     padding: 28.8px 27px 32.4px;
   }
   .open-body h3 {
@@ -780,6 +807,8 @@ const tooling = [
     letter-spacing: -0.012em;
   }
   .open-body p {
+    flex-grow: 1;
+    text-wrap: pretty;
     margin-top: 11.7px;
     font-size: 13.05px;
     line-height: 1.74;
@@ -924,9 +953,10 @@ const tooling = [
     letter-spacing: -0.022em;
     text-wrap: balance;
   }
+  /* Room for the longer sentence on one line; each sentence gets its own. */
   .closer p {
     margin: 21.6px auto 0;
-    max-width: 56ch;
+    max-width: 760px;
     font-size: 14.85px;
     font-weight: 300;
     line-height: 1.76;

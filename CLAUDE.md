@@ -318,9 +318,12 @@ silently.
 
 The design is done; this is what the remaining work is about.
 
-- **Numbers.** Every number on `/` is fabricated and live: "6–14 weeks",
-  "14 releases", "9 checkpoints", "30+ write-ups". All in the data arrays at
-  the top of `src/pages/index.astro`.
+- **Numbers.** As of 2026-09-27 the numbers on `/` are real. "6–14 week
+  engagements" is Pranav's figure. The open-source card counts ("12 datasets",
+  "26 models") are the public repos under huggingface.co/Mercity, typed in by
+  hand (the `test` dataset is left out), so update them when repos are added.
+  The write-up count and first year are computed at build from the `posts`
+  and `research` collections, as on `/about`.
 - **Tooling.** Four cards. Simula and PromptKeep are real and link out
   (PromptKeep to github.com/Mercity-AI/promptkeep, since there is no
   `/open-source/promptkeep` page). Sieve and Anvil are invented and render as
