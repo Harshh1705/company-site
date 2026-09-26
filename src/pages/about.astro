@@ -52,22 +52,23 @@ const authors = [...byName.values()].sort((a, b) => b.count - a.count || a.last.
 const firstYear = Math.min(...posts.map((p) => p.data.publishedAt.getFullYear()), FOUNDED);
 const tools = ['Simula', 'PromptKeep'];
 
+// Kept in step with the home page copy, so the two never disagree.
 const principles = [
   {
     title: 'We ship openly',
-    body: 'Most of what we learn on client work ends up public: datasets we had to build because nothing suitable existed, weights from runs worth reproducing, and write-ups detailed enough to follow end to end. The tools are MIT-licensed.',
+    body: 'Most of what we learn ends up public in some form: datasets we had to build because nothing suitable existed, weights from runs that cost us thousands of\u00a0$, and fully detailed write\u2011ups so anyone can replicate our work. The tools are MIT-licensed.',
   },
   {
-    title: 'Evaluation that tells the truth',
-    body: 'Public benchmarks rarely measure the thing you are paid for. We build the evaluation your problem needs, then run it honestly — including the results that argue against the model we just trained for you.',
+    title: 'Every project starts with evaluation',
+    body: "What we build is used by our clients' customers. So we learn the domain, build a benchmark for it, and measure every change against that baseline. We run the evaluations by hand and read the outputs ourselves.",
   },
   {
     title: 'You own what we build',
-    body: 'Models, pipelines and evaluations belong to you rather than a subscription that renews. Every checkpoint and hyperparameter decision is documented and handed over; the capability stays behind when we leave.',
+    body: 'The models, data and code we build belong to you. Every dataset ships with its generation code, filters and coverage report, so your team can see exactly how it was made.',
   },
   {
     title: 'Implementation detail included',
-    body: 'Our research logs cover what worked, what did not, and the specific reason why — because that is reliably the part every other post leaves out and the part you need in order to reproduce it.',
+    body: 'Our research logs and guides come from our own projects and include the implementation detail you need to reproduce the work: what worked, what did not, and why.',
   },
 ];
 
@@ -83,21 +84,24 @@ const fmtYear = (d: Date) => d.getFullYear();
 
 <V2Layout
   title="About"
-  description={`Mercity is a research lab founded in ${FOUNDED}. We generate the data nobody has, train the model nobody sells, and prove it works — for product and enterprise teams whose edge cannot be bought off a shelf.`}
+  description={`Mercity is a research-first firm founded in ${FOUNDED}. We work with companies on problems off-the-shelf APIs cannot solve, and we do our work in the open.`}
   path="/about"
 >
   <ListHead
     eyebrow="About"
     title="The part of the work that does not fit an API call."
-    lede={`Mercity is a research lab founded in ${FOUNDED}. We generate the data nobody has, train the model nobody sells, and then prove it actually works — for product and enterprise teams whose edge cannot be bought off a shelf.`}
-    count={`Founded ${FOUNDED} · Research lab · Research-grade, reality-ready`}
+    lede={[
+      `Mercity is a research-first firm founded in ${FOUNDED}.`,
+      'We work with companies on problems off\u2011the\u2011shelf APIs cannot solve, and we do our work in the open.',
+    ]}
+    count={`Founded ${FOUNDED} · Research-first · Open source`}
   />
 
   <!-- ═══ HOW WE WORK ════════════════════════════════════════════ -->
   <section class="band" id="how">
     <div class="shell">
       <span class="eyebrow rv" data-rv>How we work</span>
-      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Four things we would rather be held to than talk about.</h2>
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Four principles behind every project.</h2>
       <div class="principles">
         {
           principles.map((p, i) => (
@@ -167,8 +171,8 @@ const fmtYear = (d: Date) => d.getFullYear();
         <span class="eyebrow">Work with us</span>
         <h2>Bring us the problem that does not fit the API.</h2>
         <p>
-          Tell us what you are building and where the pipeline is stuck. We will come back with the right next
-          step, not a deck.
+          Tell us what you are building and where the pipeline is stuck. We will come back with a concrete next
+          step.
         </p>
         <a class="wipe" href="/contact">
           <span class="wipe-fill"></span>
@@ -180,8 +184,8 @@ const fmtYear = (d: Date) => d.getFullYear();
         <span class="eyebrow">Join the lab</span>
         <h2>Come do the work in the open.</h2>
         <p>
-          We are a small team and everything we learn ends up public. If you would rather write the research log
-          than read it, we want to hear from you.
+          We are a small team, and most of what we learn ends up public. If you would rather write the research
+          log than read it, we want to hear from you.
         </p>
         <div class="closer-links">
           <a class="quiet" href={JOBS_URL} target="_blank" rel="noopener noreferrer">
@@ -238,6 +242,7 @@ const fmtYear = (d: Date) => d.getFullYear();
     line-height: 1.25;
   }
   .principle p {
+    text-wrap: pretty;
     margin-top: 9.9px;
     max-width: 54ch;
     font-size: 13.05px;
@@ -393,6 +398,7 @@ const fmtYear = (d: Date) => d.getFullYear();
     text-wrap: balance;
   }
   .closer-card p {
+    text-wrap: pretty;
     margin-top: 12.6px;
     max-width: 46ch;
     font-size: 13.05px;

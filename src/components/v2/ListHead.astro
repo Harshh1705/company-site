@@ -6,7 +6,8 @@
 interface Props {
   eyebrow: string;
   title: string;
-  lede: string;
+  /** An array puts each sentence on its own line, as on the home page. */
+  lede: string | string[];
   count?: string;
 }
 
@@ -17,7 +18,15 @@ const { eyebrow, title, lede, count }: Props = Astro.props;
   <div class="shell">
     <span class="eyebrow rv" data-rv>{eyebrow}</span>
     <h1 class="rv" data-rv style="--rv-delay:80ms">{title}</h1>
-    <p class="lede rv" data-rv style="--rv-delay:160ms">{lede}</p>
+    {
+      Array.isArray(lede) ? (
+        <p class="lede lede-lines rv" data-rv style="--rv-delay:160ms">
+          {lede.map((line) => <span>{line}</span>)}
+        </p>
+      ) : (
+        <p class="lede rv" data-rv style="--rv-delay:160ms">{lede}</p>
+      )
+    }
     {
       count && (
         <span class="list-count rv" data-rv style="--rv-delay:240ms">
@@ -40,6 +49,15 @@ const { eyebrow, title, lede, count }: Props = Astro.props;
     font-weight: 400;
     line-height: 1.1;
     letter-spacing: -0.024em;
+    text-wrap: balance;
+  }
+  /* Room for a longer sentence on one line; narrower screens wrap each
+     sentence evenly instead of stranding a word. */
+  .lede.lede-lines {
+    max-width: 760px;
+  }
+  .lede-lines span {
+    display: block;
     text-wrap: balance;
   }
   .list-count {

@@ -130,7 +130,8 @@ Both sections run on `V2Layout` with the home page's tokens, type and
 motion, built from three components in `src/components/v2/`:
 
 - **`ListHead`** — eyebrow, serif h1, lede, mono count line. No backdrop:
-  the home hero spends the boldness, inner pages open on type.
+  the home hero spends the boldness, inner pages open on type. Pass `lede`
+  as an array to put each sentence on its own line, as the home ledes do.
 - **`EntryRow`** — one entry: mono meta column (category, date), serif
   title, two-line clamped summary, author · read time, 4:3 thumbnail.
   Hover is the nav's 1px underline drawn as `text-decoration` so it
