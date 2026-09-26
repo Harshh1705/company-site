@@ -28,19 +28,23 @@ const capabilities = [
 const personas = [
   {
     label: 'For product teams',
-    title: 'Differentiation you cannot buy off a shelf.',
-    copy: 'Your model is the same endpoint your three closest competitors are calling, which means your moat is your interface. We build the layer that is not for sale.',
+    title: 'Differentiation others cannot get.',
+    // An array breaks onto a new line between entries.
+    copy: [
+      'You are using the same APIs as everyone else, which means everyone you compete with offers the same features, at the same price and the same speed.',
+      'We help you take that technology in-house, so you can iterate and improve on it much faster than they can.',
+    ],
     backdrop: 'divergence',
     seed: 6104,
-    facts: ['6–14 weeks', 'You own the weights'],
+    facts: ['6–14 week engagements', 'You walk away with the models and data'],
   },
   {
     label: 'For enterprises',
-    title: 'AI inside the systems the business runs on.',
-    copy: 'Past the pilot stage, where the demos have stopped being interesting. Data foundations, evaluation gates and serving architecture, built alongside your engineers.',
+    title: 'AI built into your business systems.',
+    copy: 'We help you build AI into the business systems your teams already use, so they can move faster. We optimize the business one part at a time, working alongside your engineers. That speed adds up across the organization.',
     backdrop: 'structure',
     seed: 1937,
-    facts: ['Embedded teams', 'Capability stays behind'],
+    facts: ['Months-long engagements', 'Embedded plug-and-play teams'],
   },
 ];
 
@@ -193,13 +197,13 @@ const tooling = [
   <!-- ═══ WHO WE WORK WITH ═══════════════════════════════════════ -->
   <section class="band wws" id="who">
     <div class="shell">
-      <span class="wws-eyebrow rv" data-rv>Who we work with</span>
       <h2 class="wws-title rv" data-rv style="--rv-delay:80ms">
-        Two kinds of team.<br />One outcome: a capability you own.
+        We work in two types of engagements
       </h2>
-      <p class="wws-sub rv" data-rv style="--rv-delay:160ms">
-        They arrive with very different problems and leave with the same thing — models, pipelines and
-        evaluations that belong to them, rather than a subscription that renews.
+      <p class="wws-sub lede-split rv" data-rv style="--rv-delay:160ms">
+        <span>Product companies come to us for the R&amp;D that sets them apart from their competitors.</span>
+        <span>Enterprises come to us to put AI into their existing systems and improve how the organization runs.</span>
+        <span>Either way, you own the models, data and code we build.</span>
       </p>
 
       <div class="wws-grid">
@@ -215,7 +219,7 @@ const tooling = [
                 <i aria-hidden="true">[</i>{p.label}<i aria-hidden="true">]</i>
               </span>
               <h3>{p.title}</h3>
-              <p>{p.copy}</p>
+              <p>{[p.copy].flat().map((line, j) => (j ? [<br />, line] : line))}</p>
               <figure class="pcard-art">
                 <canvas data-backdrop={p.backdrop} data-seed={p.seed} aria-hidden="true"></canvas>
               </figure>
@@ -497,10 +501,11 @@ const tooling = [
   }
 
   /* ── Capabilities ───────────────────────────────────────────── */
-  /* One sentence per line. The second runs about 728px, past the
-     62ch lede cap, so this lede gets room for it on desktop; narrower
+  /* One sentence per line. The longest runs about 728px, past the
+     lede caps, so a split lede gets room for it on desktop; narrower
      screens wrap each sentence evenly instead of stranding a word. */
-  .lede.lede-split {
+  .lede.lede-split,
+  .wws-sub.lede-split {
     max-width: 760px;
   }
   .lede-split span {
@@ -567,19 +572,8 @@ const tooling = [
     text-align: center;
     background: var(--n-100);
   }
-  .wws-eyebrow {
-    display: inline-block;
-    padding-bottom: 5px;
-    border-bottom: 1px solid var(--line-2);
-    font-family: var(--mono);
-    font-size: 9.9px;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-  }
   .wws-title {
-    margin: 25px auto 0;
+    margin: 0 auto;
     max-width: 20ch;
     font-family: var(--hero-serif);
     font-size: clamp(28px, 3.7vw, 43px);
@@ -635,7 +629,7 @@ const tooling = [
     display: inline-flex;
     align-items: center;
     gap: 0.55em;
-    font-size: 13.5px;
+    font-size: 15.5px;
     font-weight: 400;
     letter-spacing: 0.01em;
     color: var(--ink-2);
@@ -651,7 +645,9 @@ const tooling = [
 
   .pcard h3 {
     margin-top: 30px;
-    max-width: 17ch;
+    /* The full card width, so both titles sit on one line from about
+       1024px up; narrower cards still balance them into two. */
+    max-width: 100%;
     font-family: var(--hero-serif);
     font-size: clamp(21px, 2.2vw, 26px);
     font-weight: 400;
@@ -661,11 +657,16 @@ const tooling = [
     text-wrap: balance;
   }
   .pcard > p {
+    /* Takes up the difference when one card's copy runs longer, so
+       the art and facts line up across the pair. */
+    flex-grow: 1;
     margin-top: 15px;
     max-width: 44ch;
     font-size: 13.95px;
     line-height: 1.74;
     color: var(--ink-3);
+    /* Keeps a lone word off the last line. */
+    text-wrap: pretty;
   }
 
   /* The graphic floats in the card's whitespace -- no frame, no bleed. */
@@ -679,11 +680,13 @@ const tooling = [
     height: 100%;
   }
 
+  /* Stacked, one fact per line: they are phrases now, too long to sit
+     side by side without breaking mid-phrase. */
   .pcard-facts {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 16px;
+    gap: 8px;
     width: 92%;
     margin-top: 32px;
     padding-top: 20px;
@@ -694,15 +697,9 @@ const tooling = [
     text-transform: uppercase;
     color: var(--ink-3);
   }
-  .pcard-facts li + li::before {
-    content: '';
-    display: inline-block;
-    width: 3px;
-    height: 3px;
-    margin-right: 16px;
-    border-radius: 50%;
-    background: var(--teal-500);
-    vertical-align: 2px;
+  .pcard-facts li {
+    text-align: center;
+    text-wrap: balance;
   }
 
 
