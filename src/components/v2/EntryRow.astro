@@ -41,7 +41,7 @@ const { href, title, summary, category, date, author, readTime, image, delay = 0
 <style>
   .row {
     display: grid;
-    grid-template-columns: 138px minmax(0, 1fr) 176px;
+    grid-template-columns: 138px minmax(0, 1fr) 220px;
     gap: 28.8px;
     padding-block: 28.8px;
     border-top: 1px solid var(--line);
@@ -130,18 +130,20 @@ const { href, title, summary, category, date, author, readTime, image, delay = 0
     transform: none;
   }
 
+  /* Covers are mostly wide, so the frame is 5:3 and the image is
+     contained, never cropped: whatever it does not fill stays white. */
   .row-thumb {
     margin: 0;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 5 / 3;
     overflow: hidden;
-    background: var(--n-100);
+    background: var(--surface);
     border: 1px solid var(--line);
   }
   .row-thumb img {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: transform 600ms var(--ease);
   }
   .row:hover .row-thumb img {
@@ -150,7 +152,7 @@ const { href, title, summary, category, date, author, readTime, image, delay = 0
 
   @media (max-width: 900px) {
     .row {
-      grid-template-columns: minmax(0, 1fr) 150px;
+      grid-template-columns: minmax(0, 1fr) 188px;
       gap: 12.6px 21.6px;
     }
     .row-meta {

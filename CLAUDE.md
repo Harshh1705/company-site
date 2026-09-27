@@ -133,7 +133,8 @@ motion, built from three components in `src/components/v2/`:
   the home hero spends the boldness, inner pages open on type. Pass `lede`
   as an array to put each sentence on its own line, as the home ledes do.
 - **`EntryRow`** — one entry: mono meta column (category, date), serif
-  title, two-line clamped summary, author · read time, 4:3 thumbnail.
+  title, two-line clamped summary, author · read time, 220px 5:3
+  thumbnail (188px below 900px).
   Hover is the nav's 1px underline drawn as `text-decoration` so it
   follows a wrapped title, plus a mono "Read →" that slides in. Rows draw
   their own top rule; `:last-child` closes with a bottom rule. Below 900px
@@ -145,9 +146,32 @@ motion, built from three components in `src/components/v2/`:
   when the body does not already contain it** (`body.includes(image)`):
   the research logs open with their cover figure, most blog posts don't.
 
-`/research` leads with the newest log as a two-column card (image left,
-copy right) and lists the rest under "Earlier". `/blog` groups by year
-with a serif year label and mono count.
+`/research` leads with the newest log as a two-column card (image left
+at `5.5fr`, copy right at `6.5fr`) and lists the rest under "Earlier".
+`/blog` groups by year with a serif year label and mono count.
+
+**Cover images are contained, never cropped.** Both the row thumbnail and
+the lead card use `object-fit: contain` on a white (`--surface`) frame,
+so a cover that does not match the frame's shape shows white bars rather
+than losing its edges. The covers are mostly wide diagrams and cropping
+cut them off.
+
+**Recommended cover size: 1600 × 900 (16:9).** One `image` file serves
+four places, and 16:9 is the shape that works in all of them:
+
+| Where | Frame | What 16:9 does there |
+|---|---|---|
+| Listing row (`EntryRow`) | 220 × 132, 5:3 | Nearly fills it, with ~4px of white top and bottom |
+| Research lead card | ~490 × 360 at desktop; 16:9 below 820px | White above and below at desktop; exact fit on mobile |
+| Article header | 744px wide, natural height | Shown as is, so 1600 wide stays sharp at 2× |
+| OG / Twitter card | 1.91:1, **cropped** by the platform | Loses ~3% top and bottom |
+
+Anything from 3:2 to 2:1 is fine. Past about 2.5:1 the thumbnail becomes
+a thin strip in white. Keep important content away from the top and
+bottom edges, which the social card trims. Remember the thumbnail is
+220px wide, a seventh of the source: a dense diagram with small labels
+reads as texture there, so give the cover one shape that holds up at
+that size.
 
 `entryToRow()` in `src/utils/blog.ts` maps a collection entry to
 `EntryRow` props so the four pages share one shape.

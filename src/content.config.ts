@@ -18,6 +18,7 @@ const postSchema = z.object({
   tags: z.array(z.string()).default([]),
   category: z.string().default('Research'),
   isTopPick: z.boolean().default(false),
+  // Cover: export at 1600 × 900 (16:9). See "Cover images" in README.md.
   image: z.string().optional(),
 });
 
