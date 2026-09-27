@@ -32,11 +32,12 @@ tools as they ship (see *Still placeholder* below). Treat design changes on
 | `/research`, `/research/[slug]` | Listing and logs, on `V2Layout`. See *Research and Blog*. |
 | `/blog`, `/blog-post/[slug]` | Listing and posts, on `V2Layout`. Same components. |
 | `/open-source/simula` | The Simula product page, on `V2Layout`. See *Simula*. |
+| `/open-source/simula-v2` | A rewrite of the Simula page, told as why and how we built it. `noindex`, for comparison until it replaces `/open-source/simula`. See *Simula v2*. |
 | `/about` | On `V2Layout`. Quiet page; every figure computed from the collections. See *About*. |
 | `/contact` | Unchanged, on `BaseLayout`. The last page on the old shell. |
 
-`/legacy`, `/v2-open` and `/design.html` are `noindex` and excluded from the
-sitemap. They are working surfaces, not shipping pages.
+`/legacy`, `/v2-open`, `/open-source/simula-v2` and `/design.html` are
+`noindex` and excluded from the sitemap. They are working surfaces, not shipping pages.
 
 ## The legacy page (`/legacy`)
 
@@ -228,6 +229,101 @@ Code samples are pre-tokenised HTML strings (`tok-k` keys indigo,
 as the research log's code blocks. The page's `<ol>`s carry their own
 numbering, so they reset `list-style` themselves — the layout only
 resets `ul`.
+
+## Simula v2 (`/open-source/simula-v2`)
+
+A rewrite of the Simula page. Pranav found v1 too loose: the `leafgrid`
+figure did not read, and the trace left a wide empty column. The copy is
+told in the first person, as the story of how we built it: client work
+kept hitting the same problems, so we wrote one library. Eight sections:
+
+hero (the same `plate`, headline "Open-sourcing the pipeline we use to
+generate training data for clients.", a GitHub mark on the GitHub
+button and a page icon on "Read how we built it", no facts line) → **the idea** (the coverage map, see
+below) → **why we built it** (a full-width ledger:
+five problems from client work, each with its example from the log on
+the left and what Simula does on the right, config keys as teal chips;
+unnumbered) → **how it works** (heading "How Simula works, step by
+step."; the step text describes Simula in general, and only the lede
+says the examples follow one row of shopper searches; no filenames on
+the cards. A flush bordered object, explanation left at `4fr`, the
+example right at `7fr`:
+taxonomy tree, weighted strategies with teal bars drawn to scale, the
+three briefs with the picked one marked, the record with its verdicts,
+the lineage; each step is tagged with its model role, which replaces
+v1's roles section) → running it (unchanged from v1, which Pranav
+liked) → evaluation → the 1,000-row numbers and limits → closer.
+
+Every example is from the research log. The three briefs are the log's
+own example round, with the second marked picked as the log has it.
+The lineage omits `complexified`, because the log's row says `true`
+while its record is a short five-field query.
+
+**No eyebrows on this page.** Pranav had every section label removed,
+the hero's included ("I don't like those eyebrows at all"), and section
+headings start flush (`section .h2 { margin-top: 0 }`). The hero plate
+is 45:32 (5:4 made 12.5% wider at the same height) in a
+`6.375fr / 5.625fr` grid, because he did not want it near-square. The
+copy has been scanned against the Claudisms banlist (em dashes,
+"real", "worth", "stay", mannered verbs like "jammed" or "steer") and
+comes back clean; rescan after any copy edit. The factor-and-tree
+explanation is told once, in the map's lede; the first ledger item
+gives the consequence (1,739 of 1,740 leaves) and step 01 the expansion
+procedure (children proposed twice, a second call merges and prunes)
+instead of repeating it.
+
+**The hero's token figure is Pranav's.** "Hundreds of billions of
+tokens" is his number (2026-09-27). The research log says "tens of
+millions", so the "Why" lede no longer quotes a token count or the
+number of client projects; he does not want the project count shown. The closer offers the
+offline example first (stand-in model, no API key, nothing to pay),
+then help setting it up or generating large datasets.
+
+When it replaces v1: move the file over `simula.astro`, set `path`, drop
+`noindex`, and take `simula-v2` out of the sitemap filter in
+`astro.config`.
+
+**The coverage map** (`src/components/v2/CoverageTree.astro`) is its own
+full-width tinted band between the hero and "why we built it": one
+description → 3 named factors → 6 named branches → 18 unlabeled leaves,
+drawn left to right. The names are plausible, from the e-commerce
+example, not the run's taxonomy: the tree is a picture of the idea.
+Built in JS so labels are real pixels at any width; below 600px the
+description stacks above the tree. It plays once when 45% of the SVG
+is in view, on the Web Animations API, about 4s: root, then each level
+draws out of the last, then the leaves fill teal one at a time in a
+fixed shuffle that visits the factors in turn. An axis runs under the
+tree from the description to the right edge, ticked at each level
+(description, factors, branches, leaves) with an open arrowhead at the
+end; it crosses at a steady linear pace during the draw and arrives
+with the leaves. Reduced motion shows the finished state. Labels have
+a halo in the band colour so links pass behind them. One mono caption
+line under it, nothing else.
+
+**This page runs 5% wider than the site.** `section { --shell: 1207.5px }`
+in the page's style widens every section's `.shell` (the nav and footer
+are in the layout and keep 1150px). Pranav asked for it so the map's
+description, "Shopper searches paired with structured extractions.",
+sits on two lines; the description block is `min(300px, 27%)` of the
+figure for the same reason.
+
+Three earlier versions were rejected in one session, in this order:
+the run's full 2,358-node taxonomy on a canvas with hover, counters and
+a traced row ("literally ugly"); a small unlabeled 1→3→9→27 tree beside
+the "why" heading ("too constrained", dots too small, no names); and a
+4→12→29 version with every leaf labelled, column headers, a traced row
+in indigo, a running count, a legend and a replay button ("way too
+busy"). Keep it at this size.
+
+The "How it works" flow still uses the research log's example row
+(`waterproof trail running shoes … nothing neon`), which is not in the
+run's dataset, and the log's node names (`trail_running`,
+`known_item_hunt`), which are not the run's (`Trail Running Shoes`,
+`exploratory_shopping › gift_browsing …`). The run's outputs are outside
+the repo at `/Volumes/E/Mercity Work/syn-data-gen/runs/v0_ecommerce_search_extraction`
+(taxonomy, dataset, `llm_calls.jsonl`, `eval_report.json`: 1,739 of 1,740
+leaves reached). `item-4681-3147e13a` is a clean real row to swap in if
+the flow should be one actual row end to end.
 
 ## About (`/about`)
 

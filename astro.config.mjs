@@ -40,7 +40,7 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      filter: (page) => !/\/(legacy|v2-open)\/?$/.test(page),
+      filter: (page) => !/\/(legacy|v2-open|simula-v2)\/?$/.test(page),
     }),
   ],
   vite: {
