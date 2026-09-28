@@ -33,6 +33,7 @@ tools as they ship (see *Still placeholder* below). Treat design changes on
 | `/blog`, `/blog-post/[slug]` | Listing and posts, on `V2Layout`. Same components. |
 | `/open-source/simula` | The Simula product page, on `V2Layout`. See *Simula*. |
 | `/open-source/simula-v2` | A rewrite of the Simula page, told as why and how we built it. `noindex`, for comparison until it replaces `/open-source/simula`. See *Simula v2*. |
+| `/services/simula` | The synthetic data service page, on `V2Layout`, under the nav's Services dropdown. See *Simula service*. |
 | `/about` | On `V2Layout`. Quiet page; every figure computed from the collections. See *About*. |
 | `/contact` | Unchanged, on `BaseLayout`. The last page on the old shell. |
 
@@ -324,6 +325,25 @@ the repo at `/Volumes/E/Mercity Work/syn-data-gen/runs/v0_ecommerce_search_extra
 (taxonomy, dataset, `llm_calls.jsonl`, `eval_report.json`: 1,739 of 1,740
 leaves reached). `item-4681-3147e13a` is a clean real row to swap in if
 the flow should be one actual row end to end.
+
+## Simula service (`/services/simula`)
+
+User-facing, written for the economic buyer as much as the engineer.
+Allowed more design latitude than the rest of the site. Sections: a
+pinned scroll hero on the `plate` (220svh; the stage sticks via
+`data-vsticky="0"`. The "Simula" wordmark blurs away while a
+pre-blurred low-res copy of the plate crossfades in and the headline
+comes into focus) → the tail chart (generated bars grow into the tail
+with scroll) → six shortfalls → a dark band over a blurred plate →
+`CoverageTree` → two entry points as tabs (A: they have data, B: they
+have the domain) → the build/review loop (a scroll-filled rail) →
+outcomes and counted proof figures → audiences with an industries
+marquee → FAQ → a frosted glass closer on the plate. Scroll-driven values
+are CSS variables set by one inline script that listens to `v2scroll`
+(synchronously) and native `scroll`. Reduced motion shows the finished
+state. The tail chart, scatter and spec tree are illustrations; the
+proof figures are from the research log, and "100B+" stands in for
+Pranav's "hundreds of billions of tokens".
 
 ## About (`/about`)
 
