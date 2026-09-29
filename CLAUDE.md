@@ -342,26 +342,69 @@ ground in and blurs the copy away) → proof strip (counted figures + a
 link to Simula) → six problems as nodes around a hub, with curves
 drawn from layout offsets and pulses on `animateMotion` → what we
 generate (eight icon tiles) → published datasets (every public
-dataset on huggingface.co/Mercity as staggered tiles in four columns,
-the even columns set lower; each tile has a dot, name, row count and a
-mono preview of the dataset's first row, keys indigo and values teal;
-this replaced an earlier carousel; the section runs at a wider
-`--shell: 1340px`) → known failure modes and our check for each (no tree graphic)
+dataset on huggingface.co/Mercity as natural-height cards in staggered columns, the even columns 56px
+lower, as in Harsh's reference (Hugging Face's own open-source grid).
+The column count is chosen so the datasets divide evenly: `DS_COLS = 5`
+for ten, two cards a column. **The whole page runs at
+`section { --shell: 1300px }`** (nav and footer keep 1150px) so the
+tiles get room while every section's edges line up; card width is
+(shell − 37 − 4 × 14) ÷ 5, about 241px. An earlier 1560px shell on
+the datasets section alone was dropped because it stuck out past the
+other sections. Below
+1100px the column wrappers go `display: contents` and the cards fall
+into two even columns, ordered by an inline `order`. **Keep the count
+dividing evenly**; that is what avoids holes. Rejected on the way:
+3/2 columns with tiles stretched to fill ("very long and stretched"),
+short columns centred (a half-tile hole at the top), and two padding
+tiles to reach twelve ("is it necessary that you need 12?"). Each
+dataset tile has a dot, name, row count and a
+small SVG illustration of what the dataset is (`VIZ` in the
+frontmatter, one per dataset id, 240 × 90, seeded: a taxonomy feeding
+stories, query/positive/negative, reasoning strands converging on an
+answer card, diffusion steps, a rink from above with the skater's
+traced path and the elements marked on it (a spin spiral, two jumps
+as dashed hops, labelled chips), and so on; stick-figure skating, a
+spin-plus-signals skating version and a zig-zag reasoning version were
+all rejected);
+these replaced
+first-row previews, whose `snap` data is still in the list but unused;
+the tiles replaced an earlier carousel) → known failure modes and our check for each (no tree graphic)
 → two ways to start, side by side → the build/review loop (a
 scroll-filled rail) and what you receive → built on Simula (the plate,
 run figures, links) → domains marquee → buyer FAQ → a frosted glass
 closer.
 
-Colour comes from `sdWash`, the design lab's "All three" treatment
-(blur → dither → grain) in light indigo/teal tints, drawn at dpr 0.6
+Colour comes from `sdWashWarm` (apricot, sand, blush and a warm
+lavender on ivory; `sdWash` is the cooler indigo/teal variant, kept
+for comparison), the design lab's "All three" treatment
+(blur → dither → grain), drawn at dpr 0.6
 as a `.wash` background on three sections only: the problems hub, the
 datasets tiles and the domains band. Each has its content on white
 cards or chips, so the colour shows between them without costing
 contrast. Text-on-ground sections stay flat.
 
+The datasets section runs a **WebGL shader** (inline script in the
+page): one canvas under the whole section, half resolution, ~30fps,
+only while on screen. It draws a slow domain-warped fbm flow (ivory,
+lilac, peach, mint) as the ground, and inside each card's rectangle
+a three-colour flow, with a white lift under the description. Every
+card currently uses the Kimi K3 card's palette (`CARD_PAL = 0`:
+indigo, violet, peach); set it to `null` to give each card its own
+palette from the `PAL` list by `data-pal`. Card
+rects are measured every frame, so the colour follows the reveal and
+hover lift; hover speeds a card's flow and deepens it. A static SVG
+grain layer sits over the canvas. With WebGL on, the section gets
+`gl-on` and the cards go transparent; without it, the `sdBlurField`
+canvas and the CSS gradient cards are the fallback. Reduced motion
+draws one still frame. Card colour strength is `CARD_MIX` (0.4, set by
+Harsh as the sweet spot; hover adds 0.15). The illustration sits on frosted white and card
+text uses `--ink`/`--ink-2`, so no small type sits on colour.
+
 The `datasets` array is typed in by hand (as of 2026-09-29; row counts
-from the Hugging Face dataset viewer, `test` left out). Keep it in step
-with the home page's "12 datasets" and the proof strip's count. Only
+from the Hugging Face dataset viewer, `test` left out). It shows 10 of
+the 12: Harsh had the two General Stories sets removed, so the lede
+says "a selection" rather than a count. The proof strip's "12 open
+datasets" and the home page's "12 datasets" count all of them. Only
 the Kimi K3 story corpus is badged "Generated with Simula", because its
 card says so.
 
@@ -480,6 +523,11 @@ silently.
   process holding 4321 so the "restarted" server quietly comes up on 4322 and
   the open tab keeps talking to the stale one. Kill by port
   (`lsof -ti :4321 | xargs kill -9`) and confirm the log says 4321.
+- **SVG injected with `set:html` falls back to solid black** if its
+  class styles are missing, which a stale dev stylesheet makes look
+  like a bug (it happened to the skating chips). Put fill and stroke on
+  the shapes as attributes too, with literal colours: `var()` does not
+  work in SVG presentation attributes.
 - **Astro inlines small stylesheets** into the HTML instead of emitting a
   `.css` chunk. Grepping only `dist/_astro/*.css` will make a page's CSS look
   missing when it is present.
