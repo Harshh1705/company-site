@@ -1088,6 +1088,48 @@
       grain(ctx, w, h, 24, true);
     },
 
+    // WASH — "All three" from /design.html (blur → dither → grain),
+    // kept light enough for ink to sit on it. Stronger than blurlight:
+    // indigo and teal tints with a little warmth, larger sources, a
+    // clear lavender ground. For sections whose content sits on white
+    // cards, so the colour shows between them without costing contrast.
+    sdWash(ctx, w, h, seed) {
+      const r = rng(seed);
+      const TINTS = [
+        hsl2rgb(243, 78, 84),
+        hsl2rgb(178, 52, 83),
+        hsl2rgb(250, 70, 89),
+        hsl2rgb(236, 64, 80),
+        hsl2rgb(30, 80, 90),
+        hsl2rgb(190, 60, 88),
+      ];
+      ctx.fillStyle = css(hsl2rgb(240, 45, 96));
+      ctx.fillRect(0, 0, w, h);
+      ctx.filter = `blur(${Math.round(Math.min(w, h) * 0.2)}px)`;
+      for (let i = 0; i < 7; i++) {
+        ctx.fillStyle = css(TINTS[Math.floor(r() * TINTS.length)]);
+        ctx.beginPath();
+        ctx.ellipse(r() * w, r() * h, w * (0.16 + r() * 0.24), h * (0.3 + r() * 0.4), r() * 3.14, 0, 6.29);
+        ctx.fill();
+      }
+      ctx.filter = 'none';
+      const img = ctx.getImageData(0, 0, w, h);
+      const d = img.data;
+      const L = 12;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = (y * w + x) * 4;
+          const bump = (BAYER8[(y & 7) * 8 + (x & 7)] / 64 - 0.5) * (255 / L);
+          for (let k = 0; k < 3; k++) {
+            const v = Math.max(0, Math.min(255, d[i + k] + bump));
+            d[i + k] = (Math.round((v / 255) * (L - 1)) / (L - 1)) * 255;
+          }
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      grain(ctx, w, h, 16, true);
+    },
+
     // LEAFGRID — coverage with a denominator. Every leaf of the
     // taxonomy is a cell, one band per factor, and a sampled leaf
     // fills. The hollow cells are the ones the run never reached;

@@ -335,22 +335,42 @@ done it before. Everything is skimmable (icons, short lines; detail
 only in the FAQ) and nothing needs a click to be seen. It has more
 design latitude than the rest of the site.
 
-Sections: a pinned scroll hero (220svh; the stage sticks via
-`data-vsticky="0"`; the "Synthetic data" wordmark blurs away while a
-low-res blurred copy of the ground crossfades in and the offer comes
-into focus) → proof strip (counted figures + a link to Simula) → six
-problems as nodes around a hub, with curves drawn from layout offsets
-and pulses on `animateMotion` → what we generate (eight icon tiles) →
-known failure modes and our check for each, under `CoverageTree` → two
-ways to start, side by side → the build/review loop (a scroll-filled
-rail) and what you receive → built on Simula (the plate, run figures,
-links) → domains marquee → buyer FAQ → a frosted glass closer.
+Sections: a pinned scroll hero (190svh; the stage sticks via
+`data-vsticky="0"`; the offer is the first screen and focuses in from
+a blur on load, then scrolling crossfades a low-res blurred copy of the
+ground in and blurs the copy away) → proof strip (counted figures + a
+link to Simula) → six problems as nodes around a hub, with curves
+drawn from layout offsets and pulses on `animateMotion` → what we
+generate (eight icon tiles) → published datasets (every public
+dataset on huggingface.co/Mercity as staggered tiles in four columns,
+the even columns set lower; each tile has a dot, name, row count and a
+mono preview of the dataset's first row, keys indigo and values teal;
+this replaced an earlier carousel; the section runs at a wider
+`--shell: 1340px`) → known failure modes and our check for each (no tree graphic)
+→ two ways to start, side by side → the build/review loop (a
+scroll-filled rail) and what you receive → built on Simula (the plate,
+run figures, links) → domains marquee → buyer FAQ → a frosted glass
+closer.
+
+Colour comes from `sdWash`, the design lab's "All three" treatment
+(blur → dither → grain) in light indigo/teal tints, drawn at dpr 0.6
+as a `.wash` background on three sections only: the problems hub, the
+datasets tiles and the domains band. Each has its content on white
+cards or chips, so the colour shows between them without costing
+contrast. Text-on-ground sections stay flat.
+
+The `datasets` array is typed in by hand (as of 2026-09-29; row counts
+from the Hugging Face dataset viewer, `test` left out). Keep it in step
+with the home page's "12 datasets" and the proof strip's count. Only
+the Kimi K3 story corpus is badged "Generated with Simula", because its
+card says so.
 
 The hero, hub and closer grounds are `sdStrata`: the Simula plate's
 indigo cloth cut into the strata bleed from `/design.html`. Harsh
 asked for the scroll-and-blur intro to stay, and cut the first draft's
 dark "skipping synthetic data" band, text-heavy shortfall grid and
-entry tabs. "100B+" stands in for Pranav's "hundreds of billions of tokens";
+entry tabs; later the "Synthetic data" wordmark screen and the
+coverage tree went too. "100B+" stands in for Pranav's "hundreds of billions of tokens";
 the run figures are from the research log; the scatter and tree are
 illustrations.
 
