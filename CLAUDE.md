@@ -33,7 +33,7 @@ tools as they ship (see *Still placeholder* below). Treat design changes on
 | `/blog`, `/blog-post/[slug]` | Listing and posts, on `V2Layout`. Same components. |
 | `/open-source/simula` | The Simula product page, on `V2Layout`. See *Simula*. |
 | `/open-source/simula-v2` | A rewrite of the Simula page, told as why and how we built it. `noindex`, for comparison until it replaces `/open-source/simula`. See *Simula v2*. |
-| `/services/simula` | The synthetic data service page, on `V2Layout`, under the nav's Services dropdown. See *Simula service*. |
+| `/services/synthetic-data` | The synthetic data service page, on `V2Layout`, under the nav's Services dropdown. See *Synthetic data service*. |
 | `/about` | On `V2Layout`. Quiet page; every figure computed from the collections. See *About*. |
 | `/contact` | Unchanged, on `BaseLayout`. The last page on the old shell. |
 
@@ -326,24 +326,33 @@ the repo at `/Volumes/E/Mercity Work/syn-data-gen/runs/v0_ecommerce_search_extra
 leaves reached). `item-4681-3147e13a` is a clean real row to swap in if
 the flow should be one actual row end to end.
 
-## Simula service (`/services/simula`)
+## Synthetic data service (`/services/synthetic-data`)
 
-User-facing, written for the economic buyer as much as the engineer.
-Allowed more design latitude than the rest of the site. Sections: a
-pinned scroll hero on the `plate` (220svh; the stage sticks via
-`data-vsticky="0"`. The "Simula" wordmark blurs away while a
-pre-blurred low-res copy of the plate crossfades in and the headline
-comes into focus) → the tail chart (generated bars grow into the tail
-with scroll) → six shortfalls → a dark band over a blurred plate →
-`CoverageTree` → two entry points as tabs (A: they have data, B: they
-have the domain) → the build/review loop (a scroll-filled rail) →
-outcomes and counted proof figures → audiences with an industries
-marquee → FAQ → a frosted glass closer on the plate. Scroll-driven values
-are CSS variables set by one inline script that listens to `v2scroll`
-(synchronously) and native `scroll`. Reduced motion shows the finished
-state. The tail chart, scatter and spec tree are illustrations; the
-proof figures are from the research log, and "100B+" stands in for
-Pranav's "hundreds of billions of tokens".
+Sells synthetic data generation **as a service**, not Simula. Written
+for bottom-of-funnel buyers: they know the problem and that synthetic
+data is the answer, so the page shows we can do it for them and have
+done it before. Everything is skimmable (icons, short lines; detail
+only in the FAQ) and nothing needs a click to be seen. It has more
+design latitude than the rest of the site.
+
+Sections: a pinned scroll hero (220svh; the stage sticks via
+`data-vsticky="0"`; the "Synthetic data" wordmark blurs away while a
+low-res blurred copy of the ground crossfades in and the offer comes
+into focus) → proof strip (counted figures + a link to Simula) → six
+problems as nodes around a hub, with curves drawn from layout offsets
+and pulses on `animateMotion` → what we generate (eight icon tiles) →
+known failure modes and our check for each, under `CoverageTree` → two
+ways to start, side by side → the build/review loop (a scroll-filled
+rail) and what you receive → built on Simula (the plate, run figures,
+links) → domains marquee → buyer FAQ → a frosted glass closer.
+
+The hero, hub and closer grounds are `sdStrata`: the Simula plate's
+indigo cloth cut into the strata bleed from `/design.html`. Harsh
+asked for the scroll-and-blur intro to stay, and cut the first draft's
+dark "skipping synthetic data" band, text-heavy shortfall grid and
+entry tabs. "100B+" stands in for Pranav's "hundreds of billions of tokens";
+the run figures are from the research log; the scatter and tree are
+illustrations.
 
 ## About (`/about`)
 

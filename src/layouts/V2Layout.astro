@@ -54,10 +54,14 @@ interface NavLink {
 
 const navLinks: NavLink[] = [
   {
-    href: '/services/simula',
+    href: '/services/synthetic-data',
     label: 'Services',
     children: [
-      { href: '/services/simula', label: 'Synthetic data generation', note: 'Datasets for your domain, built on Simula' },
+      {
+        href: '/services/synthetic-data',
+        label: 'Synthetic data generation',
+        note: 'Training and evaluation data for your domain',
+      },
     ],
   },
   { href: '/research', label: 'Research' },
@@ -435,7 +439,7 @@ const current = (href: string) => (root(href) === section ? 'page' : undefined);
           <div class="v2-foot-col">
             <span class="v2-foot-h">Site</span>
             <a href="/">Home</a>
-            <a href="/services/simula">Services</a>
+            <a href="/services/synthetic-data">Services</a>
             <a href="/research">Research</a>
             <a href="/blog">Blog</a>
             <a href="/open-source/simula">Open source</a>

@@ -1,0 +1,2223 @@
+---
+/**
+ * Synthetic data generation, as a service.
+ *
+ * Written for buyers at the bottom of the funnel: they know the problem
+ * and they know synthetic data is the answer, so the page has to show
+ * that we can do it for them and have done it before. Every section is
+ * skimmable: icons and short lines first, detail only in the FAQ.
+ *
+ * The hero is a pinned scroll on `sdStrata` (the Simula plate's indigo
+ * cloth cut into the strata bleed from /design.html). The wordmark
+ * blurs away and the offer comes into focus.
+ *
+ * Figures: "100B+" stands in for Pranav's "hundreds of billions of
+ * tokens"; the dataset count is the hand count on the home page; the
+ * run figures are from the Simula research log. The scatter and the
+ * tree under "Two ways to start" are illustrations.
+ */
+import { getCollection } from 'astro:content';
+import V2Layout from '@/layouts/V2Layout.astro';
+import CoverageTree from '@/components/v2/CoverageTree.astro';
+
+const OSS_URL = '/open-source/simula';
+const GITHUB_URL = 'https://github.com/Mercity-AI/Simula';
+const LOG_URL = '/research/building-simula-our-synthetic-data-generation-library';
+const HF_DATASETS_URL = 'https://huggingface.co/datasets?author=Mercity';
+
+const writeups = [...(await getCollection('posts')), ...(await getCollection('research'))];
+const firstYear = Math.min(...writeups.map((e) => e.data.publishedAt.getFullYear()));
+
+/* Line icons on a 24 grid, drawn with currentColor. */
+const ICON: Record<string, string> = {
+  sft: '<path d="M4 5h16v10H10l-6 4z"/><path d="M8 9h8M8 12h5"/>',
+  chat: '<path d="M3 4h12v8H8l-5 3.5z"/><path d="M18 8h3v11l-4-3h-7v-2"/>',
+  agent: '<rect x="3" y="4" width="6" height="6"/><rect x="15" y="14" width="6" height="6"/><path d="M9 7h4v10h2"/><circle cx="13" cy="12" r="1.2"/>',
+  rag: '<path d="M13 3H6v18h6"/><path d="M13 3l4 4v3"/><path d="M13 3v4h4"/><circle cx="16.5" cy="16.5" r="3.5"/><path d="M19 19l2.5 2.5"/>',
+  extract: '<path d="M8 4c-2 0-2.5 1-2.5 3v2c0 1.6-.8 3-2 3 1.2 0 2 1.4 2 3v2c0 2 .5 3 2.5 3"/><path d="M16 4c2 0 2.5 1 2.5 3v2c0 1.6.8 3 2 3-1.2 0-2 1.4-2 3v2c0 2-.5 3-2.5 3"/><path d="M10 12h4"/>',
+  classify: '<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><circle cx="16.5" cy="16.5" r="3.5"/>',
+  evalset: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6.5-6.5"/><path d="M16 5.5h3v3"/>',
+  redteam: '<path d="M12 3l8 3v6c0 4.8-3.4 8-8 9-4.6-1-8-4.2-8-9V6z"/><path d="M12 8v5M12 16v.6"/>',
+  scarcity: '<ellipse cx="12" cy="5.5" rx="7" ry="2.5"/><path d="M5 5.5v13c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-13"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5" stroke-dasharray="2 2.5"/>',
+  access: '<rect x="5" y="11" width="14" height="10"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2.5"/>',
+  tail: '<path d="M3 3v18h18"/><path d="M5 5c3 0 4 11 16 12"/><circle cx="18" cy="16.6" r="1.3"/>',
+  quality: '<path d="M4 5h16l-6 7.5V19l-4 2v-8.5z"/>',
+  safety: '<circle cx="12" cy="12" r="6.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
+  leak: '<path d="M9 3h6"/><path d="M10 3v6l-5.2 9.2A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M7.5 15h9"/>',
+  repeat: '<rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/>',
+  wrong: '<circle cx="12" cy="12" r="8.5"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  same: '<path d="M5 9h14M5 15h14"/>',
+  lineage: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="12" r="2"/><path d="M6 7v10M6 12h10"/>',
+  map: '<circle cx="4.5" cy="12" r="1.8"/><path d="M6.3 12H9M9 6v12M9 6h4M9 12h4M9 18h4"/><circle cx="15.5" cy="6" r="1.6"/><circle cx="15.5" cy="12" r="1.6"/><circle cx="15.5" cy="18" r="1.6"/>',
+};
+
+/* ── Proof strip, right under the hero ─────────────────────────── */
+const strip = [
+  { count: 100, suffix: 'B+', label: 'tokens of synthetic data', note: 'generated for client projects' },
+  // Hand count of public repos under huggingface.co/Mercity, as on the home page.
+  { count: 12, suffix: '', label: 'open datasets', note: 'published on Hugging Face' },
+  { count: writeups.length, suffix: '', label: 'write-ups', note: `on our research, since ${firstYear}` },
+];
+
+/* ── The six problems, around one hub ──────────────────────────── */
+const problems = [
+  { icon: 'scarcity', title: 'Scarcity', line: 'Too little data to train on' },
+  { icon: 'access', title: 'Access', line: 'Data you cannot legally use' },
+  { icon: 'tail', title: 'The long tail', line: 'Edge cases nobody recorded' },
+  { icon: 'quality', title: 'Quality', line: 'Labels that are noisy or skewed' },
+  { icon: 'safety', title: 'Safety', line: 'Attacks you cannot ethically collect' },
+  { icon: 'leak', title: 'Evaluation', line: 'Test sets you cannot trust' },
+];
+
+/* ── What we generate ──────────────────────────────────────────── */
+const kinds = [
+  { icon: 'sft', title: 'Instruction and SFT sets', line: 'Prompt and response pairs that teach a model your task.' },
+  { icon: 'chat', title: 'Multi-turn conversations', line: 'Dialogues for assistants, including the turns that go wrong.' },
+  { icon: 'agent', title: 'Agent and tool-use traces', line: 'Step-by-step trajectories with tool calls and results.' },
+  { icon: 'rag', title: 'RAG question sets', line: 'Questions and answers grounded in your documents.' },
+  { icon: 'extract', title: 'Structured extraction', line: 'Text paired with the fields your system has to pull out.' },
+  { icon: 'classify', title: 'Classification sets', line: 'Labelled examples, weighted toward the rare classes.' },
+  { icon: 'evalset', title: 'Evaluation sets', line: 'Benchmarks for your domain, kept apart from training.' },
+  { icon: 'redteam', title: 'Adversarial and red-team data', line: 'Attacks, abuse and jailbreaks for your safety systems.' },
+];
+
+/* ── Known failure modes, and the check for each ───────────────── */
+const controls = [
+  { icon: 'repeat', risk: 'It repeats the common case', fix: 'Every case is planned in a taxonomy first, so coverage is counted.' },
+  { icon: 'wrong', risk: 'Rows look right and are wrong', fix: 'A separate critic model checks every row against your rules.' },
+  { icon: 'same', risk: 'Same spec, same row', fix: 'Several briefs are drafted per case and one is picked at random.' },
+  { icon: 'leak', risk: 'Test data leaks into training', fix: 'Rows that overlap your test set are found and dropped.' },
+  { icon: 'lineage', risk: 'Nobody knows where a row came from', fix: 'Each row carries its lineage: case, prompt, model and verdicts.' },
+];
+
+/* ── Two ways to start: the illustrations ──────────────────────── */
+function rng(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const gaps = [
+  { x: 332, y: 70, r: 38 },
+  { x: 86, y: 214, r: 30 },
+];
+const scatterRand = rng(7719);
+const gauss = () => {
+  const u = 1 - scatterRand();
+  const v = scatterRand();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+};
+const points: { x: number; y: number }[] = [];
+for (const cl of [
+  { x: 150, y: 118, sx: 34, sy: 24, n: 78 },
+  { x: 250, y: 176, sx: 28, sy: 20, n: 46 },
+]) {
+  for (let i = 0; i < cl.n; i++) points.push({ x: cl.x + gauss() * cl.sx, y: cl.y + gauss() * cl.sy });
+}
+for (let i = 0; i < 14; i++) points.push({ x: 24 + scatterRand() * 352, y: 20 + scatterRand() * 236 });
+const scatter = points.filter(
+  (p) =>
+    p.x > 10 && p.x < 390 && p.y > 10 && p.y < 266 && gaps.every((g) => Math.hypot(p.x - g.x, p.y - g.y) > g.r + 8),
+);
+const ROOT = { x: 30, y: 140 };
+const factorNodes = ['product line', 'shopper intent', 'phrasing'].map((label, i) => ({ label, x: 168, y: 52 + i * 88 }));
+const leafNodes = factorNodes.flatMap((f) => [-24, 0, 24].map((dy) => ({ x: 318, y: f.y + dy, fy: f.y })));
+const curve = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+  const mx = (a.x + b.x) / 2;
+  return `M${a.x} ${a.y} C${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`;
+};
+
+const starts = [
+  {
+    key: 'A',
+    title: 'You have some data.',
+    body: 'Collected, or generated yourself. We profile it to find where it clusters and where the tail is empty, and build the taxonomy around the gaps.',
+    steps: ['Profile what you have', 'Find the empty regions', 'Plan the taxonomy around them'],
+  },
+  {
+    key: 'B',
+    title: 'You have the domain expertise.',
+    body: 'No data to share, but you know the domain. You describe what the data has to contain, and we turn that description into the taxonomy.',
+    steps: ['Describe the space', 'We turn it into a taxonomy', 'Generate against it'],
+  },
+];
+
+const loopSteps = [
+  { title: 'We generate a first tranche.', body: 'Built against the taxonomy, with a coverage report.' },
+  { title: 'You review it.', body: 'Your team flags missed cases, wrong distributions and edge cases that need more weight.' },
+  { title: 'We refine it.', body: 'Corrections go back into the taxonomy and the generation, toward the final dataset.' },
+];
+
+const deliverables = [
+  'The dataset, in the format your pipeline takes',
+  'The taxonomy it was generated from',
+  'The generation code and filters',
+  'A coverage and evaluation report',
+  'Lineage on every row',
+];
+
+const runStats = [
+  { count: 1739, suffix: '', of: '/ 1,740', label: 'leaves reached', note: 'of the taxonomy, 10K e-commerce run' },
+  { count: 96, suffix: '%', label: 'accept rate', note: 'rows passed by the critic, 1,000-row run' },
+  { count: 0, suffix: '', label: 'duplicates', note: 'in the same run, by 13-gram overlap' },
+  { count: 84, suffix: ' min', label: 'wall time', note: 'for the 1,000-row run' },
+];
+
+const uses = ['Custom LLMs', 'Domain models', 'Agents', 'RAG', 'Classification', 'Domain search', 'Evaluation'];
+const industries = [
+  'Financial services',
+  'Healthcare and life sciences',
+  'Cybersecurity',
+  'Insurance',
+  'Manufacturing',
+  'Retail and e-commerce',
+  'IT and telecom',
+  'Enterprise AI',
+];
+
+const faqs = [
+  {
+    q: 'Will training on synthetic data degrade our model?',
+    a: 'Degradation comes from a model training on its own unchecked output, round after round. We generate against a plan, check every row with a separate critic model, and judge each round against an evaluation we agree with you before scaling up.',
+  },
+  {
+    q: 'Do you need access to our data?',
+    a: 'No. If you can describe the domain, we can generate from the description alone. If you share samples, we use them to find what is missing.',
+  },
+  {
+    q: 'Who owns the dataset, and can we train on it?',
+    a: 'You own the dataset, the taxonomy, the generation code and the reports. Every row records the model that generated it, so your legal team can check that model’s terms for training use.',
+  },
+  {
+    q: 'How do we know it will improve our model?',
+    a: 'We agree the evaluation first. The first tranche comes back for your team to review, and to test against that evaluation, before we generate the rest.',
+  },
+  {
+    q: 'How much data can you generate?',
+    a: 'We have generated hundreds of billions of tokens for client projects. The volume is set by what your model needs, and the coverage report shows what each extra batch adds.',
+  },
+  {
+    q: 'Can our ML team build this in-house?',
+    a: 'Usually not without pulling people off the product. The generation pipeline is research work, a different specialisation from building the product model, and most teams do not have people to spare for it.',
+  },
+];
+---
+
+<V2Layout
+  title="Synthetic data generation"
+  description="We generate training, evaluation and red-team data for your domain, planned case by case so the edge cases are covered, checked row by row, and yours to keep."
+  path="/services/synthetic-data"
+  image="/simula-og.jpg"
+>
+  <!-- ═══ HERO: a pinned scroll on the indigo strata ═════════════ -->
+  <section class="sh" data-sh>
+    <div class="sh-stage" data-vsticky="0">
+      <div class="sh-plate" aria-hidden="true">
+        <canvas class="sh-sharp" data-backdrop="sdStrata" data-seed="4471" data-dpr="1"></canvas>
+        <canvas class="sh-soft" data-backdrop="sdStrata" data-seed="4471" data-dpr="0.35"></canvas>
+        <span class="sh-light l1"></span>
+        <span class="sh-light l2"></span>
+        <span class="sh-light l3"></span>
+        <span class="sh-shade"></span>
+      </div>
+
+      <div class="sh-word" aria-hidden="true">
+        <span class="sh-word-in">Synthetic data</span>
+        <span class="sh-tag">Generated for your domain · Verified row by row</span>
+      </div>
+
+      <div class="sh-copy" data-sh-copy>
+        <div class="shell sh-copy-in">
+          <h1 class="sh-in">We generate the data your model is missing.</h1>
+          <p class="sh-in d1">
+            Training, evaluation and red-team data for your domain, planned case by case so the edge cases are covered.
+            Every row is checked by a separate critic model, traced to how it was made, and yours to keep.
+          </p>
+          <div class="sh-actions sh-in d2">
+            <a class="btn-l" href="/contact">
+              <span class="btn-l-fill"></span>
+              <span class="btn-l-label">Scope your dataset</span>
+              <span class="btn-l-label" aria-hidden="true">→</span>
+            </a>
+            <a class="quiet on-dark" href="#generate">See what we generate<span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-cue" aria-hidden="true">
+        <span>Scroll</span>
+        <i></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PROOF STRIP ════════════════════════════════════════════ -->
+  <section class="strip-band">
+    <div class="shell">
+      <div class="strip" data-counts>
+        {
+          strip.map((s, i) => (
+            <div class="strip-cell rv" data-rv style={`--rv-delay:${i * 80}ms`}>
+              <span class="strip-fig">
+                <span data-count={s.count} data-suffix={s.suffix}>
+                  {s.count.toLocaleString('en-US')}
+                  {s.suffix}
+                </span>
+              </span>
+              <span class="strip-label">
+                {s.label}
+                <span>{s.note}</span>
+              </span>
+            </div>
+          ))
+        }
+        <a class="strip-cell strip-link rv" data-rv style="--rv-delay:240ms" href={OSS_URL}>
+          <span class="strip-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" set:html={ICON.map} />
+          </span>
+          <span>
+            Our pipeline, Simula, is open source
+            <b>See how it works →</b>
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ THE PROBLEMS: six nodes, one hub ═══════════════════════ -->
+  <section class="band band-tint" id="problems">
+    <div class="shell">
+      <div class="split-head">
+        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">The data problems we are brought in to solve.</h2>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">Most teams arrive with more than one. One dataset, planned properly, answers all six.</p>
+      </div>
+
+      <div class="nodes" data-nodes>
+        <svg class="nodes-lines" aria-hidden="true"></svg>
+        <figure class="hub rv" data-rv data-hub>
+          <canvas data-backdrop="sdStrata" data-seed="918" data-dpr="1" aria-hidden="true"></canvas>
+          <span class="hub-word">Your dataset</span>
+          <span class="hub-note">Planned · Generated · Verified</span>
+        </figure>
+        {
+          problems.map((p, i) => (
+            <div
+              class:list={['node rv', i < 3 ? 'node-l' : 'node-r']}
+              data-rv
+              data-from={i < 3 ? 'left' : 'right'}
+              data-node={i}
+              style={`--rv-delay:${120 + (i % 3) * 80}ms;grid-row:${(i % 3) + 1}`}
+            >
+              <span class="node-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" set:html={ICON[p.icon]} />
+              </span>
+              <span class="node-text">
+                <b>{p.title}</b>
+                {p.line}
+              </span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ WHAT WE GENERATE ═══════════════════════════════════════ -->
+  <section class="band" id="generate">
+    <div class="shell">
+      <div class="split-head">
+        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">What we generate.</h2>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">
+          Text data for training and testing models, in whatever schema your pipeline takes.
+        </p>
+      </div>
+      <div class="kinds">
+        {
+          kinds.map((k, i) => (
+            <article class="kind rv" data-rv style={`--rv-delay:${60 + (i % 4) * 70}ms`}>
+              <span class="kind-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" set:html={ICON[k.icon]} />
+              </span>
+              <h3>{k.title}</h3>
+              <p>{k.line}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HOW WE KEEP IT USABLE ══════════════════════════════════ -->
+  <section class="band band-tint" id="quality">
+    <div class="shell">
+      <div class="split-head">
+        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Synthetic data fails in known ways. We check for each one.</h2>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">
+          It starts with a map. Your domain is split into factors and each grows into a tree, so every case is planned
+          before a single row is written.
+        </p>
+      </div>
+      <CoverageTree />
+      <div class="controls">
+        <div class="controls-head" aria-hidden="true">
+          <span>The known failure</span>
+          <span>What we do about it</span>
+        </div>
+        {
+          controls.map((c, i) => (
+            <div class="control rv" data-rv style={`--rv-delay:${Math.min(i, 3) * 60}ms`}>
+              <span class="control-risk">
+                <span class="control-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" set:html={ICON[c.icon]} />
+                </span>
+                {c.risk}
+              </span>
+              <span class="control-fix">
+                <i aria-hidden="true"></i>
+                {c.fix}
+              </span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TWO WAYS TO START ══════════════════════════════════════ -->
+  <section class="band" id="start">
+    <div class="shell">
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Two ways to start.</h2>
+      <p class="lede rv" data-rv style="--rv-delay:160ms">It depends on what you already have. Either way, the taxonomy comes first.</p>
+
+      <div class="starts">
+        {
+          starts.map((s, i) => (
+            <article class="start rv" data-rv data-from={i ? 'right' : 'left'} style={`--rv-delay:${140 + i * 80}ms`}>
+              <figure class="start-art">
+                {i === 0 ? (
+                  <svg viewBox="0 0 400 276" role="img" aria-label="Existing data in two clusters, with two empty regions marked">
+                    {scatter.map((p) => (
+                      <circle class="pt" cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="2.6" />
+                    ))}
+                    {gaps.map((g) => (
+                      <g class="gap">
+                        <circle cx={g.x} cy={g.y} r={g.r} />
+                        <text x={g.x} y={g.y + 3.5}>
+                          empty
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 400 276" role="img" aria-label="A description split into three factors, each with three leaves">
+                    {factorNodes.map((f) => (
+                      <path class="ln" d={curve(ROOT, f)} />
+                    ))}
+                    {leafNodes.map((l) => (
+                      <path class="ln" d={curve({ x: 168, y: l.fy }, l)} />
+                    ))}
+                    <rect class="root" x={ROOT.x - 7} y={ROOT.y - 7} width="14" height="14" />
+                    <text class="lbl" x={ROOT.x - 8} y={ROOT.y + 26}>
+                      your description
+                    </text>
+                    {factorNodes.map((f) => (
+                      <g>
+                        <circle class="fac" cx={f.x} cy={f.y} r="5" />
+                        <text class="lbl" x={f.x - 10} y={f.y - 13}>
+                          {f.label}
+                        </text>
+                      </g>
+                    ))}
+                    {leafNodes.map((l) => (
+                      <circle class="leaf" cx={l.x} cy={l.y} r="4.5" />
+                    ))}
+                  </svg>
+                )}
+              </figure>
+              <div class="start-body">
+                <span class="start-key">{s.key}</span>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+                <ol class="start-steps">
+                  {s.steps.map((st) => (
+                    <li>{st}</li>
+                  ))}
+                </ol>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HOW AN ENGAGEMENT RUNS ═════════════════════════════════ -->
+  <section class="band band-tint" id="loop">
+    <div class="shell">
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">We build it with you, in rounds.</h2>
+      <p class="lede rv" data-rv style="--rv-delay:160ms">A build and review loop, not a single handoff. You see the data before the full volume is generated.</p>
+
+      <div class="loop" data-loop>
+        <div class="loop-rail" aria-hidden="true"><span class="loop-fill"></span></div>
+        <ol class="loop-steps">
+          {
+            loopSteps.map((s, i) => (
+              <li class="loop-step" data-step={i}>
+                <span class="loop-node" aria-hidden="true"></span>
+                <span class="loop-n">0{i + 1}</span>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+              </li>
+            ))
+          }
+        </ol>
+        <div class="loop-back" aria-hidden="true">
+          <svg viewBox="0 0 1000 56" preserveAspectRatio="none">
+            <path pathLength="1" d="M672 0 V30 Q672 46 656 46 H16 Q0 46 0 30 V2"></path>
+          </svg>
+          <span class="loop-arrow"></span>
+          <span class="loop-label">Repeat until your team signs off</span>
+        </div>
+      </div>
+
+      <div class="deliver rv" data-rv>
+        <h3>What you receive</h3>
+        <ul>
+          {
+            deliverables.map((d) => (
+              <li>
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>
+                {d}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ BUILT ON SIMULA ════════════════════════════════════════ -->
+  <section class="band" id="simula">
+    <div class="shell sim">
+      <figure class="plate rv" data-rv data-from="left">
+        <canvas data-backdrop="plate" data-seed="7731" data-dpr="1.3" aria-hidden="true"></canvas>
+        <span class="plate-word" aria-hidden="true">Simula</span>
+      </figure>
+      <div class="sim-copy">
+        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Built on a pipeline we open-sourced.</h2>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">
+          Simula is the core of our generation work. We built it from our client projects and published it on GitHub,
+          with a research log of every stage. When a project needs something it does not do, we build that part for the
+          project.
+        </p>
+        <dl class="sim-stats rv" data-rv style="--rv-delay:220ms" data-counts>
+          {
+            runStats.map((s) => (
+              <div>
+                <dt>{s.label}</dt>
+                <dd>
+                  <span class="sim-fig">
+                    <span data-count={s.count} data-suffix={s.suffix}>
+                      {s.count.toLocaleString('en-US')}
+                      {s.suffix}
+                    </span>
+                    {s.of && <small>{s.of}</small>}
+                  </span>
+                  <span class="sim-note">{s.note}</span>
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+        <div class="sim-links rv" data-rv style="--rv-delay:280ms">
+          <a class="quiet" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">Simula on GitHub<span aria-hidden="true">↗</span></a>
+          <a class="quiet" href={LOG_URL}>Read the research log<span aria-hidden="true">→</span></a>
+          <a class="quiet" href={HF_DATASETS_URL} target="_blank" rel="noopener noreferrer">Our datasets<span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ DOMAINS ════════════════════════════════════════════════ -->
+  <section class="band band-tint domains" id="domains">
+    <div class="shell">
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Domains where the hard cases are rare, regulated or missing.</h2>
+      <div class="uses rv" data-rv style="--rv-delay:160ms">
+        <span class="uses-h">The data goes into</span>
+        <ul>
+          {uses.map((u) => <li>{u}</li>)}
+        </ul>
+      </div>
+    </div>
+    <div class="mq rv" data-rv>
+      <div class="mq-track">
+        {
+          [0, 1].map((copy) => (
+            <ul aria-hidden={copy === 1 ? 'true' : undefined}>
+              {industries.map((name) => (
+                <li>{name}</li>
+              ))}
+            </ul>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ QUESTIONS ══════════════════════════════════════════════ -->
+  <section class="band" id="faq">
+    <div class="shell faq-in">
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">What buyers ask us first.</h2>
+      <div class="faq rv" data-rv style="--rv-delay:160ms">
+        {
+          faqs.map((f) => (
+            <details>
+              <summary>
+                {f.q}
+                <span class="plus" aria-hidden="true"></span>
+              </summary>
+              <p>{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CLOSER ═════════════════════════════════════════════════ -->
+  <section class="end">
+    <canvas class="end-bg" data-backdrop="sdStrata" data-seed="5190" data-dpr="0.9" aria-hidden="true"></canvas>
+    <span class="sh-light l1" aria-hidden="true"></span>
+    <span class="sh-light l2" aria-hidden="true"></span>
+    <div class="shell end-in">
+      <div class="glass rv" data-rv>
+        <h2>Tell us where your model breaks.</h2>
+        <p>
+          Send us the task, the model and the cases it gets wrong. We will come back with an outline of the taxonomy and
+          a plan for the first tranche.
+        </p>
+        <div class="sh-actions">
+          <a class="btn-l" href="/contact">
+            <span class="btn-l-fill"></span>
+            <span class="btn-l-label">Scope your dataset</span>
+            <span class="btn-l-label" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</V2Layout>
+
+<script is:inline>
+  /* ── Scroll-driven pieces ────────────────────────────────────────
+     The hero (word out, copy in) and the loop rail follow the scroll.
+     Under the layout's virtual scroll, `v2scroll` fires inside its own
+     frame after the wrapper moves, so we update synchronously there;
+     native scrolling goes through one rAF. */
+  (() => {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+    const set = (el, k, v) => el.style.setProperty(k, v.toFixed(4));
+
+    const hero = document.querySelector('[data-sh]');
+    const stage = hero && hero.querySelector('.sh-stage');
+    const copy = hero && hero.querySelector('[data-sh-copy]');
+    const loop = document.querySelector('[data-loop]');
+    const steps = loop ? [...loop.querySelectorAll('[data-step]')] : [];
+
+    if (reduce) {
+      if (hero) {
+        ['--a', '--b0', '--b1', '--b2'].forEach((k) => set(hero, k, 1));
+        copy.dataset.live = 'true';
+      }
+      if (loop) {
+        set(loop, '--r', 1);
+        set(loop, '--arc', 1);
+        steps.forEach((s) => (s.dataset.on = 'true'));
+      }
+      return;
+    }
+
+    const update = () => {
+      const vh = window.innerHeight;
+      if (hero) {
+        const r = hero.getBoundingClientRect();
+        const span = r.height - stage.offsetHeight;
+        const p = span > 0 ? clamp(-r.top / span) : 1;
+        set(hero, '--a', ease(clamp(p / 0.42)));
+        [0, 1, 2].forEach((i) => set(hero, '--b' + i, ease(clamp((p - 0.26 - i * 0.08) / 0.32))));
+        copy.dataset.live = p > 0.4 ? 'true' : 'false';
+      }
+      if (loop) {
+        const r = loop.getBoundingClientRect();
+        const t = clamp((vh * 0.82 - r.top) / (vh * 0.5));
+        set(loop, '--r', t);
+        set(loop, '--arc', clamp((t - 0.82) / 0.18));
+        steps.forEach((s, i) => (s.dataset.on = t >= i / 3 + 0.02 ? 'true' : 'false'));
+      }
+    };
+
+    let raf = 0;
+    const req = () => {
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          update();
+        });
+    };
+    window.addEventListener('scroll', () => (document.documentElement.dataset.vscroll ? null : req()), {
+      passive: true,
+    });
+    window.addEventListener('v2scroll', update);
+    window.addEventListener('resize', req);
+    update();
+  })();
+
+  /* ── Problem nodes: a curve from the hub to each node, drawn when
+     the figure comes into view, with a pulse running out along it. ── */
+  (() => {
+    const root = document.querySelector('[data-nodes]');
+    if (!root) return;
+    const svg = root.querySelector('.nodes-lines');
+    const hub = root.querySelector('[data-hub]');
+    const nodes = [...root.querySelectorAll('[data-node]')];
+    const NS = 'http://www.w3.org/2000/svg';
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const build = () => {
+      svg.replaceChildren();
+      if (getComputedStyle(svg).display === 'none') return;
+      /* Layout offsets, not client rects: the reveal and the virtual
+         scroll both move things with transforms, which offsets ignore. */
+      svg.setAttribute('viewBox', `0 0 ${root.offsetWidth} ${root.offsetHeight}`);
+      const hx = hub.offsetLeft;
+      const hy = hub.offsetTop;
+      nodes.forEach((n, i) => {
+        const left = n.classList.contains('node-l');
+        const row = i % 3;
+        const x1 = left ? hx : hx + hub.offsetWidth;
+        const y1 = hy + hub.offsetHeight * (0.3 + row * 0.2);
+        const x2 = left ? n.offsetLeft + n.offsetWidth : n.offsetLeft;
+        const y2 = n.offsetTop + n.offsetHeight / 2;
+        const mx = (x1 + x2) / 2;
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', `M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`);
+        path.setAttribute('pathLength', '1');
+        path.setAttribute('id', 'np-' + i);
+        path.style.transitionDelay = 200 + row * 120 + 'ms';
+        svg.appendChild(path);
+        [x1, x2].forEach((x, j) => {
+          const dot = document.createElementNS(NS, 'circle');
+          dot.setAttribute('cx', x);
+          dot.setAttribute('cy', j ? y2 : y1);
+          dot.setAttribute('r', '3');
+          dot.setAttribute('class', 'end');
+          svg.appendChild(dot);
+        });
+        if (reduce) return;
+        const pulse = document.createElementNS(NS, 'circle');
+        pulse.setAttribute('r', '3.2');
+        pulse.setAttribute('class', 'pulse');
+        const move = document.createElementNS(NS, 'animateMotion');
+        move.setAttribute('dur', '2.8s');
+        move.setAttribute('repeatCount', 'indefinite');
+        move.setAttribute('begin', -(i * 0.47).toFixed(2) + 's');
+        move.setAttribute('keyPoints', '0;1');
+        move.setAttribute('keyTimes', '0;1');
+        move.setAttribute('calcMode', 'spline');
+        move.setAttribute('keySplines', '0.4 0 0.2 1');
+        const mpath = document.createElementNS(NS, 'mpath');
+        mpath.setAttribute('href', '#np-' + i);
+        move.appendChild(mpath);
+        pulse.appendChild(move);
+        svg.appendChild(pulse);
+      });
+    };
+
+    let t;
+    const rebuild = () => {
+      clearTimeout(t);
+      t = setTimeout(build, 80);
+    };
+    if ('ResizeObserver' in window) new ResizeObserver(rebuild).observe(root);
+    else window.addEventListener('resize', rebuild);
+    build();
+
+    if (!('IntersectionObserver' in window) || reduce) {
+      root.dataset.on = 'true';
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        root.dataset.on = 'true';
+        io.disconnect();
+      },
+      { threshold: 0.35 }
+    );
+    io.observe(root);
+  })();
+
+  /* ── Counters: count up once, when their strip comes into view. ── */
+  (() => {
+    const groups = [...document.querySelectorAll('[data-counts]')];
+    if (!groups.length || !('IntersectionObserver' in window)) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const fmt = (n) => Math.round(n).toLocaleString('en-US');
+    const run = (n) => {
+      const to = Number(n.dataset.count);
+      const t0 = performance.now();
+      const tick = (t) => {
+        const k = Math.min(1, (t - t0) / 1400);
+        n.textContent = fmt(to * (1 - Math.pow(1 - k, 4))) + n.dataset.suffix;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          e.target.querySelectorAll('[data-count]').forEach(run);
+          io.unobserve(e.target);
+        });
+      },
+      { threshold: 0.4 }
+    );
+    groups.forEach((g) => {
+      g.querySelectorAll('[data-count]').forEach((n) => (n.textContent = '0' + n.dataset.suffix));
+      io.observe(g);
+    });
+  })();
+</script>
+
+<style>
+  /* ── Shared bits ───────────────────────────────────────────── */
+  section .h2 {
+    margin-top: 0;
+  }
+  .lede {
+    text-wrap: pretty;
+  }
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  svg :global(path),
+  svg :global(rect),
+  svg :global(circle),
+  svg :global(ellipse) {
+    vector-effect: non-scaling-stroke;
+  }
+  .split-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 46ch);
+    gap: 18px clamp(36px, 5vw, 72px);
+    align-items: end;
+  }
+  .split-head .lede {
+    margin-top: 0;
+    padding-bottom: 5.4px;
+  }
+  @media (max-width: 860px) {
+    .split-head {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .quiet {
+    display: inline-flex;
+    align-items: center;
+    gap: 7.2px;
+    font-family: var(--mono);
+    font-size: 9.9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    transition: color 300ms var(--ease);
+  }
+  .quiet span {
+    transition: transform 400ms var(--ease);
+  }
+  .quiet:hover {
+    color: var(--ink);
+  }
+  .quiet:hover span {
+    transform: translateX(4px);
+  }
+  .quiet.on-dark {
+    color: hsl(0 0% 100% / 0.82);
+  }
+  .quiet.on-dark:hover {
+    color: #fff;
+  }
+  /* Icons: 24-grid line drawings, indigo. */
+  .node-icon svg,
+  .kind-icon svg,
+  .control-icon svg,
+  .strip-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Light button for indigo grounds. It wipes black left to right on
+     hover, like every other button on the site. */
+  .btn-l {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 14.5px 25.2px;
+    background: var(--n-50);
+    color: var(--n-900);
+    border: 1px solid var(--n-50);
+    font-size: 11.2px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition:
+      color 300ms var(--ease),
+      border-color 300ms var(--ease);
+  }
+  .btn-l-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--n-900);
+    transform: translateX(-100%);
+    transition: transform 350ms var(--ease);
+  }
+  .btn-l-label {
+    position: relative;
+    z-index: 1;
+  }
+  .btn-l:hover {
+    color: var(--n-50);
+    border-color: var(--n-900);
+  }
+  .btn-l:hover .btn-l-fill {
+    transform: translateX(0);
+  }
+
+  /* ══ HERO ═══════════════════════════════════════════════════════
+     The section is taller than the screen; the stage pins for the
+     extra height. --a runs 0 → 1 as the wordmark blurs away, --b0..2
+     as the headline, lede and buttons come into focus. */
+  .sh {
+    --a: 0;
+    --b0: 0;
+    --b1: 0;
+    --b2: 0;
+    position: relative;
+    height: 220svh;
+    background: var(--indigo-700);
+  }
+  .sh-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    color: #fff;
+    will-change: transform;
+  }
+  /* Under virtual scroll the layout emulates the stick with a
+     transform (data-vsticky), so the stage needs a plain box. */
+  :global(html[data-vscroll]) .sh-stage {
+    position: relative;
+  }
+  .sh-plate {
+    position: absolute;
+    inset: 0;
+    background: var(--indigo-600);
+  }
+  .sh-plate canvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+  .sh-sharp {
+    inset: 0;
+  }
+  /* The same ground at a third of the resolution, blurred, and faded
+     in over the sharp one. A crossfade is far cheaper than animating
+     a blur across the whole screen. */
+  .sh-plate .sh-soft {
+    inset: -8%;
+    width: 116%;
+    height: 116%;
+    filter: blur(26px) saturate(1.15) brightness(1.06);
+    opacity: var(--a);
+  }
+  /* Soft lights drifting on the ground. Indigo and white only. */
+  .sh-light {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(70px);
+    mix-blend-mode: screen;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+  .sh-light.l1 {
+    width: 46vw;
+    height: 46vw;
+    left: -10vw;
+    top: -16vw;
+    background: hsl(243 90% 72% / 0.45);
+  }
+  .sh-light.l2 {
+    width: 38vw;
+    height: 38vw;
+    right: -8vw;
+    bottom: -14vw;
+    background: hsl(240 60% 90% / 0.26);
+    animation-duration: 28s;
+    animation-delay: -9s;
+  }
+  .sh-light.l3 {
+    width: 30vw;
+    height: 30vw;
+    left: 38vw;
+    top: 30%;
+    background: hsl(250 80% 64% / 0.3);
+    animation-duration: 34s;
+    animation-delay: -17s;
+    opacity: calc(0.4 + var(--a) * 0.6);
+  }
+  @keyframes drift {
+    to {
+      transform: translate3d(6vw, 4vw, 0) scale(1.12);
+    }
+  }
+  /* Deepens the left once the copy arrives, for contrast. */
+  .sh-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, hsl(243 80% 14% / 0.6) 0%, hsl(243 80% 14% / 0.2) 55%, transparent 100%);
+    opacity: var(--b0);
+  }
+
+  .sh-word {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 20px var(--nav-h);
+    text-align: center;
+    pointer-events: none;
+    opacity: calc(1 - var(--a) * 1.15);
+    filter: blur(calc(var(--a) * 22px));
+    transform: translateY(calc(var(--a) * -7vh)) scale(calc(1 + var(--a) * 0.2));
+  }
+  .sh-word-in {
+    display: block;
+    font-family: var(--hero-serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(62px, 11.5vw, 186px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    padding: 0 0.06em 0.06em;
+    text-wrap: balance;
+    text-shadow: 0 18px 60px hsl(243 80% 16% / 0.55);
+    animation: focus-in 1600ms var(--ease) both;
+  }
+  .sh-tag {
+    font-family: var(--mono);
+    font-size: clamp(9.9px, 1vw, 11.7px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: hsl(0 0% 100% / 0.8);
+    animation: focus-in 1400ms var(--ease) 500ms both;
+  }
+  @keyframes focus-in {
+    from {
+      opacity: 0;
+      filter: blur(24px);
+      transform: scale(1.05);
+    }
+  }
+
+  .sh-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+  .sh-copy[data-live='true'] {
+    pointer-events: auto;
+  }
+  .sh-copy-in {
+    width: 100%;
+  }
+  .sh-in {
+    --v: var(--b0);
+    opacity: var(--v);
+    filter: blur(calc((1 - var(--v)) * 14px));
+    transform: translateY(calc((1 - var(--v)) * 30px));
+  }
+  .sh-in.d1 {
+    --v: var(--b1);
+  }
+  .sh-in.d2 {
+    --v: var(--b2);
+  }
+  /* A keyboard user tabbing into the buttons sees them, whatever
+     the scroll position. */
+  .sh-copy:focus-within .sh-in {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+  .sh-copy h1 {
+    max-width: 16ch;
+    font-family: var(--hero-serif);
+    font-size: clamp(36px, 5.6vw, 72px);
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.028em;
+    text-wrap: balance;
+    text-shadow: 0 10px 40px hsl(243 80% 16% / 0.35);
+  }
+  .sh-copy p {
+    margin-top: 24px;
+    max-width: 56ch;
+    font-size: clamp(14.85px, 1.4vw, 16.65px);
+    line-height: 1.74;
+    color: hsl(0 0% 100% / 0.86);
+    text-wrap: pretty;
+  }
+  .sh-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 27px;
+    margin-top: 34px;
+  }
+
+  .sh-cue {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-h) + 26px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: hsl(0 0% 100% / 0.7);
+    opacity: calc(1 - var(--a) * 2.5);
+  }
+  /* The intro runs on the children so it never fights the scroll fade. */
+  .sh-cue > * {
+    animation: focus-in 1200ms var(--ease) 1100ms both;
+  }
+  .sh-cue i {
+    position: relative;
+    display: block;
+    width: 1px;
+    height: 42px;
+    overflow: hidden;
+    background: hsl(0 0% 100% / 0.25);
+  }
+  .sh-cue i::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -40%;
+    width: 1px;
+    height: 40%;
+    background: #fff;
+    animation: cue 2200ms var(--ease) infinite;
+  }
+  @keyframes cue {
+    to {
+      top: 100%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sh {
+      height: auto;
+    }
+    .sh-stage {
+      position: relative;
+    }
+    .sh-word,
+    .sh-cue {
+      display: none;
+    }
+    .sh-light {
+      animation: none;
+    }
+  }
+
+  /* ══ PROOF STRIP ═════════════════════════════════════════════ */
+  .strip-band {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.25fr);
+    margin: 0;
+    border-left: 1px solid var(--line);
+  }
+  .strip-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 30px 24px 28px;
+    border-right: 1px solid var(--line);
+  }
+  .strip-fig {
+    display: block;
+    font-family: var(--hero-serif);
+    font-size: clamp(34px, 3.6vw, 46px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--teal-700);
+    font-variant-numeric: tabular-nums;
+  }
+  .strip-label {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .strip-label span {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--mono);
+    font-size: 9.9px;
+    font-weight: 400;
+    color: var(--n-400);
+  }
+  .strip-link {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    background: var(--n-50);
+    transition: background 400ms var(--ease);
+  }
+  .strip-link:hover {
+    background: var(--indigo-100);
+  }
+  .strip-icon {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    padding: 8px;
+    color: var(--indigo-600);
+    border: 1px solid var(--indigo-200);
+    background: var(--surface);
+  }
+  .strip-link > span:last-child {
+    font-family: var(--hero-serif);
+    font-size: 17.1px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .strip-link b {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 9.9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--indigo-600);
+  }
+  @media (max-width: 900px) {
+    .strip {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .strip-link {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--line);
+    }
+  }
+  @media (max-width: 560px) {
+    .strip {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .strip-cell + .strip-cell {
+      border-top: 1px solid var(--line);
+    }
+  }
+
+  /* ══ PROBLEMS: three nodes a side, the hub in the middle ═════ */
+  .nodes {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 300px) minmax(0, 1fr);
+    grid-template-rows: repeat(3, auto);
+    gap: 22px clamp(56px, 8vw, 120px);
+    align-items: center;
+    margin-top: 52px;
+  }
+  .nodes-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .nodes-lines :global(path) {
+    fill: none;
+    stroke: var(--indigo-300);
+    stroke-width: 1.2;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1100ms var(--ease);
+  }
+  .nodes[data-on='true'] .nodes-lines :global(path) {
+    stroke-dashoffset: 0;
+  }
+  .nodes-lines :global(.end) {
+    fill: var(--indigo-500);
+    opacity: 0;
+    transition: opacity 600ms var(--ease) 900ms;
+  }
+  .nodes[data-on='true'] .nodes-lines :global(.end) {
+    opacity: 1;
+  }
+  .nodes-lines :global(.pulse) {
+    fill: var(--indigo-600);
+    opacity: 0;
+    transition: opacity 600ms var(--ease) 1400ms;
+  }
+  .nodes[data-on='true'] .nodes-lines :global(.pulse) {
+    opacity: 1;
+  }
+  .hub {
+    position: relative;
+    grid-column: 2;
+    grid-row: 1 / 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    aspect-ratio: 1;
+    margin: 0;
+    overflow: hidden;
+    color: #fff;
+    background: var(--indigo-600);
+    box-shadow: 0 30px 70px -36px hsl(243 80% 20% / 0.6);
+  }
+  .hub canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .hub-word,
+  .hub-note {
+    position: relative;
+  }
+  .hub-word {
+    font-family: var(--hero-serif);
+    font-style: italic;
+    font-size: clamp(28px, 2.8vw, 36px);
+    letter-spacing: -0.02em;
+    text-shadow: 0 8px 26px hsl(243 80% 16% / 0.5);
+  }
+  .hub-note {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: hsl(0 0% 100% / 0.78);
+  }
+  .node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    transition:
+      transform 500ms var(--ease),
+      border-color 500ms var(--ease),
+      box-shadow 500ms var(--ease);
+  }
+  .node-l {
+    grid-column: 1;
+  }
+  .node-r {
+    grid-column: 3;
+  }
+  .node:hover {
+    transform: translateY(-1.2px);
+    border-color: var(--indigo-300);
+    box-shadow: 0 10px 24px -16px hsl(243 60% 30% / 0.35);
+  }
+  .node-icon {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    padding: 9px;
+    color: var(--indigo-600);
+    background: var(--indigo-100);
+  }
+  .node-text {
+    font-size: 13.05px;
+    line-height: 1.5;
+    color: var(--ink-3);
+  }
+  .node-text b {
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--hero-serif);
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+  @media (max-width: 900px) {
+    .nodes {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: none;
+      gap: 12px;
+    }
+    .nodes-lines {
+      display: none;
+    }
+    .hub {
+      grid-column: 1 / -1;
+      grid-row: auto;
+      aspect-ratio: 21 / 8;
+      margin-bottom: 8px;
+    }
+    .node,
+    .node-l,
+    .node-r {
+      grid-column: auto;
+      grid-row: auto !important;
+    }
+  }
+  @media (max-width: 520px) {
+    .nodes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ══ WHAT WE GENERATE ════════════════════════════════════════ */
+  .kinds {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 46.8px;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  .kind {
+    position: relative;
+    padding: 24px 22px 26px;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    transition: background 400ms var(--ease);
+  }
+  .kind::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    top: -1px;
+    height: 2px;
+    background: var(--indigo-600);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 500ms var(--ease);
+  }
+  .kind:hover {
+    background: var(--n-50);
+  }
+  .kind:hover::before {
+    transform: scaleX(1);
+  }
+  .kind-icon {
+    display: block;
+    width: 30px;
+    height: 30px;
+    color: var(--indigo-600);
+    transition: transform 500ms var(--ease);
+  }
+  .kind:hover .kind-icon {
+    transform: translateY(-2px);
+  }
+  .kind h3 {
+    margin-top: 22px;
+    font-family: var(--hero-serif);
+    font-size: 18.9px;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+  }
+  .kind p {
+    margin-top: 8px;
+    font-size: 12.6px;
+    line-height: 1.65;
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+  @media (max-width: 1000px) {
+    .kinds {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 480px) {
+    .kinds {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ══ QUALITY ═════════════════════════════════════════════════ */
+  #quality :global(.cov) {
+    margin-top: 40px;
+  }
+  .controls {
+    margin-top: 44px;
+  }
+  .controls-head,
+  .control {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 0 clamp(28px, 4vw, 54px);
+  }
+  .controls-head {
+    padding-bottom: 12px;
+    font-family: var(--mono);
+    font-size: 9.9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--n-400);
+  }
+  .control {
+    align-items: center;
+    padding-block: 16px;
+    border-top: 1px solid var(--line-2);
+  }
+  .control:last-child {
+    border-bottom: 1px solid var(--line-2);
+  }
+  .control-risk {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--hero-serif);
+    font-size: 18px;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+  .control-icon {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+    color: var(--ink-3);
+    border: 1px solid var(--line-2);
+    background: var(--surface);
+  }
+  .control-fix {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .control-fix i {
+    flex: none;
+    width: 26px;
+    height: 1px;
+    background: var(--indigo-500);
+    position: relative;
+  }
+  .control-fix i::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -3px;
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid var(--indigo-500);
+    border-right: 1px solid var(--indigo-500);
+    transform: rotate(45deg);
+  }
+  @media (max-width: 760px) {
+    .controls-head {
+      display: none;
+    }
+    .control {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
+    .control-fix i {
+      display: none;
+    }
+    .control-fix {
+      padding-left: 48px;
+    }
+  }
+
+  /* ══ TWO WAYS TO START: side by side, both visible ═══════════ */
+  .starts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 40px;
+  }
+  .start {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .start-art {
+    margin: 0;
+    padding: 22px 26px;
+    background: var(--n-50);
+    border-bottom: 1px solid var(--line);
+  }
+  .start-art svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 250px;
+    overflow: visible;
+  }
+  .start-art .pt {
+    fill: var(--teal-500);
+    opacity: 0.72;
+  }
+  .start-art .gap circle {
+    fill: hsl(34 84% 53% / 0.08);
+    stroke: var(--amber-500);
+    stroke-width: 1.2;
+    stroke-dasharray: 4 4;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  .start-art .gap text {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-anchor: middle;
+    letter-spacing: 0.1em;
+    fill: var(--amber-800);
+  }
+  @keyframes breathe {
+    50% {
+      transform: scale(1.07);
+    }
+  }
+  .start-art .ln {
+    fill: none;
+    stroke: var(--n-300);
+    stroke-width: 1.2;
+  }
+  .start-art .root {
+    fill: var(--indigo-600);
+  }
+  .start-art .fac {
+    fill: var(--surface);
+    stroke: var(--indigo-600);
+    stroke-width: 1.6;
+  }
+  .start-art .leaf {
+    fill: var(--teal-500);
+  }
+  .start-art .lbl {
+    font-family: var(--mono);
+    font-size: 11px;
+    fill: var(--ink-2);
+  }
+  .start-body {
+    padding: 26px 28px 28px;
+  }
+  .start-key {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    font-family: var(--mono);
+    font-size: 10.8px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--indigo-600);
+  }
+  .start h3 {
+    margin-top: 16px;
+    font-family: var(--hero-serif);
+    font-size: clamp(21px, 2vw, 25px);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.016em;
+  }
+  .start p {
+    margin-top: 10px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+  .start-steps {
+    margin-top: 20px;
+    counter-reset: s;
+  }
+  .start-steps li {
+    counter-increment: s;
+    display: flex;
+    gap: 14px;
+    padding-block: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 13.05px;
+    color: var(--ink-2);
+  }
+  .start-steps li::before {
+    content: '0' counter(s);
+    font-family: var(--mono);
+    font-size: 10.35px;
+    padding-top: 2px;
+    color: var(--indigo-600);
+  }
+  @media (max-width: 860px) {
+    .starts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .start-art .gap circle {
+      animation: none;
+    }
+  }
+
+  /* ══ THE LOOP ════════════════════════════════════════════════
+     A rail fills with the scroll and lights each step as it passes;
+     then the return path draws back to the start. */
+  .loop {
+    --r: 0;
+    --arc: 0;
+    position: relative;
+    margin-top: 52px;
+  }
+  .loop-rail {
+    position: relative;
+    height: 1px;
+    background: var(--line-2);
+  }
+  .loop-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--indigo-600);
+    transform-origin: left;
+    transform: scaleX(var(--r));
+  }
+  .loop-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 clamp(24px, 3.4vw, 46.8px);
+  }
+  .loop-step {
+    position: relative;
+    padding-top: 30px;
+  }
+  .loop-node {
+    position: absolute;
+    left: 0;
+    top: -6px;
+    width: 11px;
+    height: 11px;
+    background: var(--n-100);
+    border: 1px solid var(--line-2);
+    transition:
+      background 400ms var(--ease),
+      border-color 400ms var(--ease),
+      transform 400ms var(--ease);
+  }
+  .loop-step[data-on='true'] .loop-node {
+    background: var(--indigo-600);
+    border-color: var(--indigo-600);
+    transform: rotate(45deg);
+  }
+  .loop-n {
+    font-family: var(--mono);
+    font-size: 10.35px;
+    color: var(--n-400);
+    transition: color 400ms var(--ease);
+  }
+  .loop-step[data-on='true'] .loop-n {
+    color: var(--indigo-600);
+  }
+  .loop-step h3 {
+    margin-top: 12px;
+    font-family: var(--hero-serif);
+    font-size: 22.5px;
+    font-weight: 400;
+    letter-spacing: -0.016em;
+    line-height: 1.2;
+  }
+  .loop-step p {
+    margin-top: 8px;
+    max-width: 36ch;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+  .loop-step h3,
+  .loop-step p {
+    opacity: 0.4;
+    transition: opacity 500ms var(--ease);
+  }
+  .loop-step[data-on='true'] h3,
+  .loop-step[data-on='true'] p {
+    opacity: 1;
+  }
+  .loop-back {
+    position: relative;
+    margin-top: 26px;
+    height: 56px;
+  }
+  .loop-back svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .loop-back path {
+    fill: none;
+    stroke: var(--indigo-500);
+    stroke-width: 1.2;
+    stroke-dasharray: 1;
+    stroke-dashoffset: calc(1 - var(--arc));
+  }
+  .loop-arrow {
+    position: absolute;
+    left: -4px;
+    top: -2px;
+    width: 9px;
+    height: 9px;
+    border-top: 1.2px solid var(--indigo-500);
+    border-left: 1.2px solid var(--indigo-500);
+    transform: rotate(45deg);
+    opacity: clamp(0, calc(var(--arc) * 8 - 7), 1);
+  }
+  .loop-label {
+    position: absolute;
+    left: 33.6%;
+    bottom: 0;
+    transform: translate(-50%, 50%);
+    padding: 3px 12px;
+    background: var(--n-100);
+    font-family: var(--mono);
+    font-size: 9.9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--indigo-600);
+    opacity: var(--arc);
+  }
+  @media (max-width: 820px) {
+    .loop-rail,
+    .loop-back svg,
+    .loop-arrow {
+      display: none;
+    }
+    .loop-steps {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      padding-left: 22px;
+      border-left: 1px solid var(--line-2);
+    }
+    .loop-step {
+      padding-block: 6px 26px;
+    }
+    .loop-node {
+      left: -28px;
+      top: 8px;
+    }
+    .loop-back {
+      height: auto;
+      margin-top: 4px;
+    }
+    .loop-label {
+      position: static;
+      transform: none;
+      display: inline-block;
+      padding: 0;
+      background: none;
+      white-space: normal;
+      opacity: 1;
+    }
+  }
+  .deliver {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 8fr);
+    gap: 18px clamp(28px, 4vw, 54px);
+    margin-top: 56px;
+    padding: 26px 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .deliver h3 {
+    font-family: var(--hero-serif);
+    font-size: 21.6px;
+    font-weight: 400;
+    letter-spacing: -0.016em;
+  }
+  .deliver ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 28px;
+  }
+  .deliver li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .deliver svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    transform: translateY(2px);
+    fill: none;
+    stroke: var(--teal-700);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (max-width: 760px) {
+    .deliver,
+    .deliver ul {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ══ BUILT ON SIMULA ═════════════════════════════════════════ */
+  .sim {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(36px, 5vw, 72px);
+    align-items: center;
+  }
+  .plate {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 45 / 32;
+    overflow: hidden;
+    border: 1px solid var(--line-2);
+    background: var(--indigo-600);
+  }
+  .plate canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .plate-word {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding-bottom: 0.08em;
+    font-family: var(--hero-serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(48px, 6.4vw, 86px);
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 10px 36px hsl(243 80% 20% / 0.55);
+  }
+  .sim-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 30px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  .sim-stats > div {
+    padding: 16px 18px 18px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .sim-stats dt {
+    font-family: var(--mono);
+    font-size: 9.9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .sim-stats dd {
+    margin: 10px 0 0;
+  }
+  .sim-fig {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-family: var(--hero-serif);
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--teal-700);
+    font-variant-numeric: tabular-nums;
+  }
+  .sim-fig small {
+    font-size: 0.45em;
+    opacity: 0.7;
+  }
+  .sim-note {
+    display: block;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 9.9px;
+    line-height: 1.5;
+    color: var(--n-400);
+  }
+  .sim-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    margin-top: 26px;
+  }
+  @media (max-width: 900px) {
+    .sim {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .plate {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  /* ══ DOMAINS ═════════════════════════════════════════════════ */
+  .domains .h2 {
+    max-width: 24ch;
+  }
+  .uses {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    margin-top: 26px;
+  }
+  .uses-h {
+    font-family: var(--mono);
+    font-size: 9.9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .uses ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .uses li {
+    padding: 5px 11px;
+    font-size: 12.6px;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+  }
+  /* Industries, drifting past. Faded at both edges, paused on hover. */
+  .mq {
+    margin-top: 44px;
+    overflow: hidden;
+    border-block: 1px solid var(--line-2);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+  .mq-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 46s linear infinite;
+  }
+  .mq:hover .mq-track {
+    animation-play-state: paused;
+  }
+  .mq ul {
+    display: flex;
+  }
+  .mq li {
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    padding: 20px 17px;
+    font-family: var(--hero-serif);
+    font-size: clamp(20px, 2.2vw, 28px);
+    letter-spacing: -0.016em;
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+  .mq li::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--indigo-500);
+    transform: rotate(45deg);
+    opacity: 0.55;
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mq-track {
+      animation: none;
+      width: auto;
+    }
+    .mq ul {
+      flex-wrap: wrap;
+    }
+    .mq ul[aria-hidden] {
+      display: none;
+    }
+  }
+
+  /* ══ QUESTIONS ═══════════════════════════════════════════════ */
+  .faq-in {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: 28px clamp(36px, 5vw, 72px);
+    align-items: start;
+  }
+  .faq details {
+    border-top: 1px solid var(--line);
+  }
+  .faq details:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+  .faq summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 20px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--hero-serif);
+    font-size: 19.8px;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
+    transition: color 300ms var(--ease);
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary:hover {
+    color: var(--indigo-700);
+  }
+  .plus {
+    position: relative;
+    flex: none;
+    width: 14px;
+    height: 14px;
+    transition: transform 400ms var(--ease);
+  }
+  .plus::before,
+  .plus::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6.5px;
+    width: 14px;
+    height: 1.2px;
+    background: currentColor;
+  }
+  .plus::after {
+    transform: rotate(90deg);
+  }
+  .faq details[open] .plus {
+    transform: rotate(45deg);
+  }
+  .faq details p {
+    max-width: 62ch;
+    padding-bottom: 22px;
+    font-size: 14.4px;
+    line-height: 1.74;
+    color: var(--ink-3);
+    animation: answer-in 500ms var(--ease) both;
+  }
+  @keyframes answer-in {
+    from {
+      opacity: 0;
+      filter: blur(6px);
+      transform: translateY(8px);
+    }
+  }
+  @media (max-width: 860px) {
+    .faq-in {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* ══ CLOSER: frosted glass on the strata ═════════════════════ */
+  .end {
+    position: relative;
+    overflow: hidden;
+    background: var(--indigo-600);
+    color: #fff;
+  }
+  .end-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .end-in {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(79.2px, 9.9vw, 131.4px);
+  }
+  .glass {
+    max-width: 720px;
+    padding: clamp(30px, 4vw, 52px);
+    background: hsl(0 0% 100% / 0.08);
+    border: 1px solid hsl(0 0% 100% / 0.24);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    backdrop-filter: blur(20px) saturate(1.3);
+    box-shadow: 0 30px 80px -40px hsl(243 80% 12% / 0.6);
+  }
+  .glass h2 {
+    max-width: 16ch;
+    font-family: var(--hero-serif);
+    font-size: clamp(30px, 4vw, 48px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.024em;
+    text-wrap: balance;
+  }
+  .glass p {
+    margin-top: 16px;
+    max-width: 50ch;
+    font-size: 14.85px;
+    line-height: 1.74;
+    color: hsl(0 0% 100% / 0.84);
+  }
+</style>

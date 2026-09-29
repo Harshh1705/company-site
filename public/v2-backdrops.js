@@ -1038,6 +1038,56 @@
       grain(ctx, w, h, 26, true);
     },
 
+    /* ── Synthetic data service (/services/synthetic-data) ──────── */
+
+    // INDIGO STRATA — the plate's cloth cut into the strata bleed.
+    // Bands of an indigo ramp rise gently left to right, their edges
+    // Bayer-dithered and warped by noise, so the ground reads as data
+    // laid down in layers. The plate's fine weave runs through every
+    // band and a darker pool holds the centre for the type on top.
+    // Coordinates are normalised, so a low-dpr copy blurs to the same
+    // picture.
+    sdStrata(ctx, w, h, seed) {
+      const fbm = makeNoise(seed);
+      const RAMP = [
+        hsl2rgb(243, 78, 22),
+        hsl2rgb(243, 78, 31),
+        hsl2rgb(243, 74, 41),
+        hsl2rgb(243, 74, 50),
+        hsl2rgb(241, 72, 59),
+        hsl2rgb(240, 66, 68),
+      ];
+      const deep = hsl2rgb(243, 80, 26);
+      const L = 8;
+      const k = 900 / Math.max(w, h);
+      const img = ctx.createImageData(w, h);
+      const d = img.data;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const nx = x * k;
+          const ny = y * k;
+          const warp = (fbm(nx / 240, ny / 80, 3) - 0.5) * 0.46;
+          const bump = (BAYER8[(y & 7) * 8 + (x & 7)] / 64 - 0.5) * (1.3 / L);
+          // Bands climb toward the top right: light at the top, deep below.
+          let t = 1 - (y / h) * 0.95 + (x / w) * 0.22 - 0.1 + warp + bump;
+          t = t < 0 ? 0 : t > 1 ? 1 : t;
+          let c = ramp(RAMP, Math.round(t * (L - 1)) / (L - 1));
+          const weave = fbm(nx * 0.11, ny * 0.11, 3) - 0.5;
+          c = mix(c, weave > 0 ? RAMP[5] : RAMP[0], Math.abs(weave) * 0.22);
+          const dx = x / w - 0.5;
+          const dy = y / h - 0.52;
+          c = mix(c, deep, Math.exp(-(dx * dx * 3.6 + dy * dy * 8)) * 0.42);
+          const i = (y * w + x) * 4;
+          d[i] = c[0];
+          d[i + 1] = c[1];
+          d[i + 2] = c[2];
+          d[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      grain(ctx, w, h, 24, true);
+    },
+
     // LEAFGRID — coverage with a denominator. Every leaf of the
     // taxonomy is a cell, one band per factor, and a sampled leaf
     // fills. The hollow cells are the ones the run never reached;
