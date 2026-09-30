@@ -374,12 +374,38 @@ scroll-filled rail) and what you receive → built on Simula (the plate,
 run figures, links) → domains marquee → buyer FAQ → a frosted glass
 closer.
 
+**Current order and copy (2026-09-30, from Harsh's boss's notes).**
+The order above is superseded: hero → domains marquee → problems →
+what we generate → failure modes → two ways to start → the loop →
+published datasets → built on Simula → proof strip → FAQ → closer.
+The copy was rewritten to sound like an agency with authority. The hero
+is "Large-scale synthetic data, engineered for model training." with
+three sentences (years of specialising, 100B+ tokens, clients trained
+state-of-the-art models, fewer retraining cycles; the SOTA claim is
+from Harsh's note, confirm before launch). The problems section is
+white; the hub reads "All six, one answer / An engineered dataset",
+each node adds a teal line with our fix, and the pulses run inward.
+Failure modes are headed "We engineer against known failures in data
+generation." and stay the two-column table (failure | how we prevent
+it), in agency wording with no Simula context; a version with a
+failure → prevented picture per card was tried and reverted.
+"You have some data" is the scatter with a hatched missing column and a
+"no data" corner (the per-case histogram was cut); "domain expertise" is
+expert notes → spec → colour-tagged samples. The loop is vertical, with
+a sticky `tranche.csv` beside it (`data-stage` -1 to 3, set from which
+step has passed 66% of the screen): rows generate → review marks O/X
+with two flags → flagged values struck through and replaced, X turns to
+a tick → every row ticks and ghost rows arrive. The last step keeps a
+36vh min-height: the CSV grows on that step, and without the room the
+end of the section pushed it up under the nav. The proof strip's
+fourth cell is now a contact link. "Telecom" is out of the marquee.
+
 Colour comes from `sdWashWarm` (apricot, sand, blush and a warm
 lavender on ivory; `sdWash` is the cooler indigo/teal variant, kept
 for comparison), the design lab's "All three" treatment
 (blur → dither → grain), drawn at dpr 0.6
-as a `.wash` background on three sections only: the problems hub, the
-datasets tiles and the domains band. Each has its content on white
+as a `.wash` background on the datasets tiles and the domains band
+(the problems hub had it until Harsh asked for white). Each has its content on white
 cards or chips, so the colour shows between them without costing
 contrast. Text-on-ground sections stay flat.
 
@@ -404,9 +430,9 @@ The `datasets` array is typed in by hand (as of 2026-09-29; row counts
 from the Hugging Face dataset viewer, `test` left out). It shows 10 of
 the 12: Harsh had the two General Stories sets removed, so the lede
 says "a selection" rather than a count. The proof strip's "12 open
-datasets" and the home page's "12 datasets" count all of them. Only
-the Kimi K3 story corpus is badged "Generated with Simula", because its
-card says so.
+datasets" and the home page's "12 datasets" count all of them. No
+card carries a "Generated with Simula" badge any more (Harsh had the
+Kimi K3 one removed); its description still mentions Simula.
 
 The hero, hub and closer grounds are `sdStrata`: the Simula plate's
 indigo cloth cut into the strata bleed from `/design.html`. Harsh

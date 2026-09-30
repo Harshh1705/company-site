@@ -55,22 +55,24 @@ const ICON: Record<string, string> = {
   map: '<circle cx="4.5" cy="12" r="1.8"/><path d="M6.3 12H9M9 6v12M9 6h4M9 12h4M9 18h4"/><circle cx="15.5" cy="6" r="1.6"/><circle cx="15.5" cy="12" r="1.6"/><circle cx="15.5" cy="18" r="1.6"/>',
 };
 
-/* ── Proof strip, right under the hero ─────────────────────────── */
+/* ── Proof strip, after the Simula section ─────────────────────── */
 const strip = [
-  { count: 100, suffix: 'B+', label: 'tokens of synthetic data', note: 'generated for client projects' },
+  { count: 100, suffix: 'B+', label: 'tokens generated', note: 'for client projects' },
   // Hand count of public repos under huggingface.co/Mercity, as on the home page.
   { count: HF_DATASETS, suffix: '', label: 'open datasets', note: 'published on Hugging Face' },
-  { count: writeups.length, suffix: '', label: 'write-ups', note: `on our research, since ${firstYear}` },
+  { count: writeups.length, suffix: '', label: 'research write-ups', note: `published since ${firstYear}` },
 ];
 
-/* ── The six problems, around one hub ──────────────────────────── */
+/* ── The six problems, around one hub. Each node carries the problem
+   and, in teal, what the engineered dataset does about it; the pulses
+   run from the problems into the hub. ── */
 const problems = [
-  { icon: 'scarcity', title: 'Scarcity', line: 'Too little data to train on' },
-  { icon: 'access', title: 'Access', line: 'Data you cannot legally use' },
-  { icon: 'tail', title: 'The long tail', line: 'Edge cases nobody recorded' },
-  { icon: 'quality', title: 'Quality', line: 'Labels that are noisy or skewed' },
-  { icon: 'safety', title: 'Safety', line: 'Attacks you cannot ethically collect' },
-  { icon: 'leak', title: 'Evaluation', line: 'Test sets you cannot trust' },
+  { icon: 'scarcity', title: 'Volume', line: 'Too little data to train on', fix: 'Generated at the volume you need' },
+  { icon: 'access', title: 'Access', line: 'Data you cannot legally use', fix: 'No private records involved' },
+  { icon: 'tail', title: 'The long tail', line: 'Edge cases nobody recorded', fix: 'Rare cases generated on purpose' },
+  { icon: 'quality', title: 'Quality', line: 'Labels that are noisy or skewed', fix: 'Every sample verified' },
+  { icon: 'safety', title: 'Safety', line: 'Attacks you cannot ethically collect', fix: 'Adversarial sets for red-teaming' },
+  { icon: 'leak', title: 'Evaluation', line: 'Test sets you cannot trust', fix: 'Held-out benchmarks for your domain' },
 ];
 
 /* ── What we generate ──────────────────────────────────────────── */
@@ -102,7 +104,6 @@ const datasets: {
   line: string;
   tone: 'indigo' | 'teal' | 'neutral';
   snap: Snap;
-  simula?: boolean;
 }[] = [
   {
     id: 'kimi-k3-story-corpus-embeddings',
@@ -111,7 +112,6 @@ const datasets: {
     rows: 4000,
     line: 'Synthetic short stories generated with Simula, with whole-document embeddings.',
     tone: 'indigo',
-    simula: true,
     snap: [
       ['id', 'story-00000'],
       ['genre_path', 'speculative fiction / epic fantasy'],
@@ -239,11 +239,31 @@ const dsColumns = Array.from({ length: DS_COLS }, (_, c) => datasets.filter((_, 
 
 /* ── Known failure modes, and the check for each ───────────────── */
 const controls = [
-  { icon: 'repeat', risk: 'It repeats the common case', fix: 'Every case is planned in a taxonomy first, so coverage is counted.' },
-  { icon: 'wrong', risk: 'Rows look right and are wrong', fix: 'A separate critic model checks every row against your rules.' },
-  { icon: 'same', risk: 'Same spec, same row', fix: 'Several briefs are drafted per case and one is picked at random.' },
-  { icon: 'leak', risk: 'Test data leaks into training', fix: 'Rows that overlap your test set are found and dropped.' },
-  { icon: 'lineage', risk: 'Nobody knows where a row came from', fix: 'Each row carries its lineage: case, prompt, model and verdicts.' },
+  {
+    icon: 'repeat',
+    risk: 'It over-represents the easy cases',
+    fix: 'We map your domain before generating, so rare cases are produced on purpose and coverage is measured.',
+  },
+  {
+    icon: 'wrong',
+    risk: 'Samples read well and are wrong',
+    fix: 'An independent model verifies every sample against your rules. Failures are regenerated or dropped.',
+  },
+  {
+    icon: 'same',
+    risk: 'It collapses into sameness',
+    fix: 'We vary brief, style and difficulty case by case, and measure diversity on every batch.',
+  },
+  {
+    icon: 'leak',
+    risk: 'Test data leaks into training',
+    fix: 'We deduplicate against your evaluation sets, so a benchmark gain means the model improved.',
+  },
+  {
+    icon: 'lineage',
+    risk: 'Nobody can trace a sample',
+    fix: 'Every sample ships with its lineage: the case, prompt, model and checks behind it.',
+  },
 ];
 
 /* ── Two ways to start: the illustrations ──────────────────────── */
@@ -255,10 +275,13 @@ function rng(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const gaps = [
-  { x: 332, y: 70, r: 38 },
-  { x: 86, y: 214, r: 30 },
-];
+/* A: your data, plotted, with its gaps. A grid over the plot, one case
+   type with no samples at all (a hatched column) and a rare corner
+   that was never reached. */
+const PA = { x0: 44, x1: 384, y0: 14, y1: 240 };
+const BIN_W = (PA.x1 - PA.x0) / 10;
+const MISSING = { x: PA.x0 + BIN_W * 3, w: BIN_W };
+const RARE = { x: 338, y: 50, r: 26 };
 const scatterRand = rng(7719);
 const gauss = () => {
   const u = 1 - scatterRand();
@@ -267,19 +290,51 @@ const gauss = () => {
 };
 const points: { x: number; y: number }[] = [];
 for (const cl of [
-  { x: 150, y: 118, sx: 34, sy: 24, n: 78 },
-  { x: 250, y: 176, sx: 28, sy: 20, n: 46 },
+  { x: 92, y: 150, sx: 24, sy: 40, n: 54 },
+  { x: 240, y: 164, sx: 34, sy: 36, n: 64 },
+  { x: 352, y: 198, sx: 14, sy: 20, n: 16 },
 ]) {
   for (let i = 0; i < cl.n; i++) points.push({ x: cl.x + gauss() * cl.sx, y: cl.y + gauss() * cl.sy });
 }
-for (let i = 0; i < 14; i++) points.push({ x: 24 + scatterRand() * 352, y: 20 + scatterRand() * 236 });
+for (let i = 0; i < 16; i++) points.push({ x: PA.x0 + scatterRand() * (PA.x1 - PA.x0), y: PA.y0 + scatterRand() * (PA.y1 - PA.y0) });
 const scatter = points.filter(
   (p) =>
-    p.x > 10 && p.x < 390 && p.y > 10 && p.y < 266 && gaps.every((g) => Math.hypot(p.x - g.x, p.y - g.y) > g.r + 8),
+    p.x > PA.x0 + 6 &&
+    p.x < PA.x1 - 6 &&
+    p.y > PA.y0 + 6 &&
+    p.y < PA.y1 - 6 &&
+    (p.x < MISSING.x - 5 || p.x > MISSING.x + MISSING.w + 5) &&
+    Math.hypot(p.x - RARE.x, p.y - RARE.y) > RARE.r + 6,
 );
-const ROOT = { x: 30, y: 140 };
-const factorNodes = ['product line', 'shopper intent', 'phrasing'].map((label, i) => ({ label, x: 168, y: 52 + i * 88 }));
-const leafNodes = factorNodes.flatMap((f) => [-24, 0, 24].map((dy) => ({ x: 318, y: f.y + dy, fy: f.y })));
+const gridX = Array.from({ length: 11 }, (_, i) => PA.x0 + i * BIN_W);
+const gridY = Array.from({ length: 7 }, (_, i) => PA.y0 + (i * (PA.y1 - PA.y0)) / 6);
+
+/* B: your experts' knowledge, turned into data. Their notes on the
+   left with three rules marked, each feeding a written spec, which
+   generates the samples on the right, tagged by the rule they cover. */
+const NOTE = { x: 16, y: 34, w: 132, h: 200 };
+const noteRand = rng(3307);
+const noteTags = [
+  { row: 1, label: 'rule', tone: 'i' },
+  { row: 4, label: 'edge case', tone: 't' },
+  { row: 7, label: 'format', tone: 'p' },
+];
+const noteLines = Array.from({ length: 9 }, (_, r) => {
+  const y = NOTE.y + 44 + r * 17;
+  const tag = noteTags.find((t) => t.row === r);
+  if (tag) {
+    const w = tag.label.length * 6.1 + 12;
+    return { y, tag: { ...tag, w, x: NOTE.x + 12 }, after: 14 + noteRand() * 30 };
+  }
+  return { y, bar: 54 + noteRand() * 52 };
+});
+const SPEC = { x: 196, y: 134 };
+const outRows = Array.from({ length: 7 }, (_, i) => ({
+  y: 38 + i * 30,
+  tone: ['i', 't', 'p', 'i', 't', 'i', 'p'][i],
+  a: 46 + noteRand() * 44,
+  b: 22 + noteRand() * 36,
+}));
 const curve = (a: { x: number; y: number }, b: { x: number; y: number }) => {
   const mx = (a.x + b.x) / 2;
   return `M${a.x} ${a.y} C${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`;
@@ -559,22 +614,60 @@ const starts = [
   {
     key: 'A',
     title: 'You have some data.',
-    body: 'Collected, or generated yourself. We profile it to find where it clusters and where the tail is empty, and build the taxonomy around the gaps.',
-    steps: ['Profile what you have', 'Find the empty regions', 'Plan the taxonomy around them'],
+    body: ' We audit your data, Collected in production or built in-house, map where it is thin or missing, and generate precisely into those gaps.',
+    steps: ['Audit what you have', 'Map the gaps and imbalances', 'Generate to fill them'],
   },
   {
     key: 'B',
     title: 'You have the domain expertise.',
-    body: 'No data to share, but you know the domain. You describe what the data has to contain, and we turn that description into the taxonomy.',
-    steps: ['Describe the space', 'We turn it into a taxonomy', 'Generate against it'],
+    body: 'No data you can share, but people who know the domain inside out. We turn their knowledge into a written specification of every case, then generate from it.',
+    steps: ['Working sessions with your experts', 'A specification of every case', 'Generation against that spec'],
   },
 ];
 
 const loopSteps = [
-  { title: 'We generate a first tranche.', body: 'Built against the taxonomy, with a coverage report.' },
-  { title: 'You review it.', body: 'Your team flags missed cases, wrong distributions and edge cases that need more weight.' },
-  { title: 'We refine it.', body: 'Corrections go back into the taxonomy and the generation, toward the final dataset.' },
+  {
+    title: 'We generate the first sample.',
+    body: 'A tranche of the dataset, built against the plan, with a coverage report showing exactly what is in it.',
+  },
+  {
+    title: 'Your team reviews it.',
+    body: 'Your experts mark what is right and flag what is not: wrong labels, near duplicates, cases that are missing.',
+  },
+  {
+    title: 'We refine and regenerate.',
+    body: 'Every flag goes back into the plan and the generation. Rounds repeat until your team signs off.',
+  },
+  {
+    title: 'We deliver at full volume.',
+    body: 'Once the sample is approved, we scale to the full dataset and hand over everything behind it.',
+  },
 ];
+
+/* The CSV beside the loop. It fills in on step one; on step two a
+   review column marks each row with an O or an X; on step three the
+   flagged rows are regenerated; on step four every row passes. */
+const csvRows: { id: string; text: string; intent: string; flag?: string; text2?: string; intent2?: string }[] = [
+  { id: '0001', text: 'My card was declined abroad, please unblock it', intent: 'card_block' },
+  { id: '0002', text: 'Move my EMI date to the 5th of each month', intent: 'loan_reschedule' },
+  {
+    id: '0003',
+    text: 'I was charged twice for the same order',
+    intent: 'card_block',
+    flag: 'wrong label',
+    intent2: 'dispute',
+  },
+  { id: '0004', text: 'Close our joint account, both holders agree', intent: 'account_close' },
+  {
+    id: '0005',
+    text: 'Card declined overseas, can you unblock it',
+    intent: 'card_block',
+    flag: 'near duplicate',
+    text2: 'Card locked after three wrong PINs at a Dubai ATM',
+  },
+  { id: '0006', text: 'Why is my statement in a currency I never chose?', intent: 'fx_query' },
+];
+const csvStatus = ['Round 1 · generating', 'Round 1 · in review', 'Round 2 · regenerated', 'Final · signed off'];
 
 const deliverables = [
   'The dataset, in the format your pipeline takes',
@@ -591,7 +684,6 @@ const runStats = [
   { count: 84, suffix: ' min', label: 'wall time', note: 'for the 1,000-row run' },
 ];
 
-const uses = ['Custom LLMs', 'Domain models', 'Agents', 'RAG', 'Classification', 'Domain search', 'Evaluation'];
 const industries = [
   'Financial services',
   'Healthcare and life sciences',
@@ -599,18 +691,18 @@ const industries = [
   'Insurance',
   'Manufacturing',
   'Retail and e-commerce',
-  'IT and telecom',
+  'IT services',
   'Enterprise AI',
 ];
 
 const faqs = [
   {
     q: 'Will training on synthetic data degrade our model?',
-    a: 'Degradation comes from a model training on its own unchecked output, round after round. We generate against a plan, check every row with a separate critic model, and judge each round against an evaluation we agree with you before scaling up.',
+    a: 'Degradation comes from a model training on unchecked model output, round after round. We plan coverage before we generate, verify every sample with an independent model, and measure each round against an evaluation agreed with you before we scale.',
   },
   {
     q: 'Do you need access to our data?',
-    a: 'No. If you can describe the domain, we can generate from the description alone. If you share samples, we use them to find what is missing.',
+    a: 'No. We can generate from a specification written with your domain experts. If you can share samples, we use them to find what is missing and to match your formats.',
   },
   {
     q: 'Who owns the dataset, and can we train on it?',
@@ -618,7 +710,7 @@ const faqs = [
   },
   {
     q: 'How do we know it will improve our model?',
-    a: 'We agree the evaluation first. The first tranche comes back for your team to review, and to test against that evaluation, before we generate the rest.',
+    a: 'We agree the evaluation before we start. The first tranche comes back to your team to review and to test against it, and we scale only once it moves the numbers you care about.',
   },
   {
     q: 'How much data can you generate?',
@@ -626,14 +718,14 @@ const faqs = [
   },
   {
     q: 'Can our ML team build this in-house?',
-    a: 'Usually not without pulling people off the product. The generation pipeline is research work, a different specialisation from building the product model, and most teams do not have people to spare for it.',
+    a: 'Some can, at the cost of taking senior people off the product for months. Generation pipelines are their own specialisation, and it is the one we have spent years on.',
   },
 ];
 ---
 
 <V2Layout
   title="Synthetic data generation"
-  description="We generate training, evaluation and red-team data for your domain, planned case by case so the edge cases are covered, checked row by row, and yours to keep."
+  description="Large-scale synthetic data for model training and evaluation, engineered around your domain, verified sample by sample, and yours to keep."
   path="/services/synthetic-data"
   image="/simula-og.jpg"
 >
@@ -651,10 +743,12 @@ const faqs = [
 
       <div class="sh-copy" data-sh-copy data-live="true">
         <div class="shell sh-copy-in">
-          <h1 class="sh-in">We generate the data your model is missing.</h1>
+          <h1 class="sh-in">Large-scale synthetic data, engineered for training your models.</h1>
           <p class="sh-in d1">
-            Training, evaluation and red-team data for your domain, planned case by case so the edge cases are covered.
-            Every row is checked by a separate critic model, traced to how it was made, and yours to keep.
+            Generating training data at scale is the work we have specialised in for years. We have produced more than 100
+            billion tokens for client projects, and our clients have trained state-of-the-art models on it. <br /> Every dataset is
+            planned around your domain and verified sample by sample, so your model reaches production sooner, with fewer
+            retraining cycles.
           </p>
           <div class="sh-actions sh-in d2">
             <a class="btn-l" href="/contact">
@@ -674,53 +768,45 @@ const faqs = [
     </div>
   </section>
 
-  <!-- ═══ PROOF STRIP ════════════════════════════════════════════ -->
-  <section class="strip-band">
+
+  <!-- ═══ DOMAINS ════════════════════════════════════════════════ -->
+  <section class="band band-tint domains wash" id="domains">
+    <canvas class="wash-bg" data-backdrop="sdWashWarm" data-seed="9053" data-dpr="0.6" aria-hidden="true"></canvas>
     <div class="shell">
-      <div class="strip" data-counts>
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Domains we generate for</h2>
+    </div>
+    <div class="mq rv" data-rv>
+      <div class="mq-track">
         {
-          strip.map((s, i) => (
-            <div class="strip-cell rv" data-rv style={`--rv-delay:${i * 80}ms`}>
-              <span class="strip-fig">
-                <span data-count={s.count} data-suffix={s.suffix}>
-                  {s.count.toLocaleString('en-US')}
-                  {s.suffix}
-                </span>
-              </span>
-              <span class="strip-label">
-                {s.label}
-                <span>{s.note}</span>
-              </span>
-            </div>
+          [0, 1].map((copy) => (
+            <ul aria-hidden={copy === 1 ? 'true' : undefined}>
+              {industries.map((name) => (
+                <li>{name}</li>
+              ))}
+            </ul>
           ))
         }
-        <a class="strip-cell strip-link rv" data-rv style="--rv-delay:240ms" href={OSS_URL}>
-          <span class="strip-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" set:html={ICON.map} />
-          </span>
-          <span>
-            Our pipeline, Simula, is open source
-            <b>See how it works →</b>
-          </span>
-        </a>
       </div>
     </div>
   </section>
 
+
   <!-- ═══ THE PROBLEMS: six nodes, one hub ═══════════════════════ -->
-  <section class="band band-tint wash" id="problems">
-    <canvas class="wash-bg" data-backdrop="sdWashWarm" data-seed="2207" data-dpr="0.6" aria-hidden="true"></canvas>
+  <section class="band" id="problems">
     <div class="shell">
       <div class="split-head">
         <h2 class="h2 rv" data-rv style="--rv-delay:80ms">The data problems we are brought in to solve.</h2>
-        <p class="lede rv" data-rv style="--rv-delay:160ms">Most teams arrive with more than one. One dataset, planned properly, answers all six.</p>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">
+          Most teams come to us with more than one problem. Our dataset engineered for your domain resolves all six at once.
+        </p>
       </div>
 
       <div class="nodes" data-nodes>
         <svg class="nodes-lines" aria-hidden="true"></svg>
         <figure class="hub rv" data-rv data-hub>
           <canvas data-backdrop="sdStrata" data-seed="918" data-dpr="1" aria-hidden="true"></canvas>
-          <span class="hub-word">Your dataset</span>
+          <span class="hub-eyebrow">All six, one answer</span>
+          <span class="hub-word">An engineered dataset</span>
           <span class="hub-note">Planned · Generated · Verified</span>
         </figure>
         {
@@ -738,6 +824,7 @@ const faqs = [
               <span class="node-text">
                 <b>{p.title}</b>
                 {p.line}
+                <span class="node-fix">{p.fix}</span>
               </span>
             </div>
           ))
@@ -746,13 +833,14 @@ const faqs = [
     </div>
   </section>
 
+
   <!-- ═══ WHAT WE GENERATE ═══════════════════════════════════════ -->
-  <section class="band" id="generate">
+  <section class="band band-tint" id="generate">
     <div class="shell">
       <div class="split-head">
         <h2 class="h2 rv" data-rv style="--rv-delay:80ms">What we generate.</h2>
         <p class="lede rv" data-rv style="--rv-delay:160ms">
-          Text data for training and testing models, in whatever schema your pipeline takes.
+          Data for training and evaluating language models, delivered in the schema your pipeline already uses.
         </p>
       </div>
       <div class="kinds">
@@ -770,6 +858,283 @@ const faqs = [
       </div>
     </div>
   </section>
+
+
+  <!-- ═══ HOW WE KEEP IT USABLE ══════════════════════════════════ -->
+  <section class="band" id="quality">
+    <div class="shell">
+      <div class="split-head">
+        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">We engineer against known failures in data generation.</h2>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">
+          These are the failure modes we have seen repeatedly across client projects. Each is planned for before
+          generation starts and checked before any data reaches you.
+        </p>
+      </div>
+      <div class="controls">
+        <div class="controls-head" aria-hidden="true">
+          <span>The failure mode</span>
+          <span>How we prevent it</span>
+        </div>
+        {
+          controls.map((c, i) => (
+            <div class="control rv" data-rv style={`--rv-delay:${Math.min(i, 3) * 60}ms`}>
+              <span class="control-risk">
+                <span class="control-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" set:html={ICON[c.icon]} />
+                </span>
+                {c.risk}
+              </span>
+              <span class="control-fix">
+                <i aria-hidden="true"></i>
+                {c.fix}
+              </span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══ TWO WAYS TO START ══════════════════════════════════════ -->
+  <section class="band band-tint" id="start">
+    <div class="shell">
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Two ways to start.</h2>
+      <p class="lede rv" data-rv style="--rv-delay:160ms">
+        It depends on what you already have. Either way, we plan the data before we generate any of it.
+      </p>
+
+      <div class="starts">
+        {
+          starts.map((s, i) => (
+            <article class="start rv" data-rv data-from={i ? 'right' : 'left'} style={`--rv-delay:${140 + i * 80}ms`}>
+              <figure class="start-art">
+                {i === 0 ? (
+                  <svg viewBox="0 0 400 276" role="img" aria-label="Existing data on a grid: one case type has no samples and one corner was never reached">
+                    <defs>
+                      <pattern id="st-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                        <path d="M0 0 V6" class="hatch" />
+                      </pattern>
+                    </defs>
+                    {gridX.map((x) => (
+                      <path class="grid" d={`M${x.toFixed(1)} ${PA.y0} V${PA.y1}`} />
+                    ))}
+                    {gridY.map((y) => (
+                      <path class="grid" d={`M${PA.x0} ${y.toFixed(1)} H${PA.x1}`} />
+                    ))}
+                    <rect class="miss" x={MISSING.x.toFixed(1)} y={PA.y0} width={MISSING.w.toFixed(1)} height={PA.y1 - PA.y0} />
+                    <circle class="miss rare" cx={RARE.x} cy={RARE.y} r={RARE.r} />
+                    {scatter.map((p) => (
+                      <circle class="pt" cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="2.4" />
+                    ))}
+                    <path class="axis" d={`M${PA.x0} ${PA.y0} V${PA.y1} H${PA.x1}`} />
+                    <text class="lbl" x={PA.x1} y={PA.y1 + 16} text-anchor="end">case type →</text>
+                    <text class="lbl" x={-PA.y0} y={PA.x0 - 10} text-anchor="end" transform="rotate(-90)">difficulty →</text>
+                    <g class="tag">
+                      <rect x={(MISSING.x + MISSING.w / 2 - 25).toFixed(1)} y={PA.y0 + 60} width="50" height="16" />
+                      <text x={(MISSING.x + MISSING.w / 2).toFixed(1)} y={PA.y0 + 71.5}>missing</text>
+                    </g>
+                    <g class="tag">
+                      <rect x={RARE.x - 58} y={RARE.y + RARE.r + 4} width="50" height="16" />
+                      <text x={RARE.x - 33} y={RARE.y + RARE.r + 15.5}>no data</text>
+                    </g>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 400 276" role="img" aria-label="Notes from your experts with three rules marked, turned into a specification, which generates samples tagged by the rule they cover">
+                    {noteLines.map((l) =>
+                      l.tag ? (
+                        <path class="ln" d={curve({ x: l.tag.x + l.tag.w, y: l.y }, { x: SPEC.x - 14, y: SPEC.y })} />
+                      ) : null,
+                    )}
+                    {outRows.map((r) => (
+                      <path class="ln" d={curve({ x: SPEC.x + 14, y: SPEC.y }, { x: 238, y: r.y + 10 })} />
+                    ))}
+                    <rect class="note" x={NOTE.x} y={NOTE.y} width={NOTE.w} height={NOTE.h} />
+                    <circle class="head" cx={NOTE.x + 16} cy={NOTE.y + 17} r="6" />
+                    <path class="head-b" d={`M${NOTE.x + 7} ${NOTE.y + 32} Q${NOTE.x + 16} ${NOTE.y + 22} ${NOTE.x + 25} ${NOTE.y + 32}`} />
+                    <text class="lbl" x={NOTE.x + 32} y={NOTE.y + 25}>expert notes</text>
+                    {noteLines.map((l) =>
+                      l.tag ? (
+                        <g class:list={['chip', `c-${l.tag.tone}`]}>
+                          <rect x={l.tag.x} y={l.y - 7} width={l.tag.w.toFixed(1)} height="14" />
+                          <text x={(l.tag.x + l.tag.w / 2).toFixed(1)} y={l.y + 3.2}>
+                            {l.tag.label}
+                          </text>
+                          <rect class="txt" x={(l.tag.x + l.tag.w + 5).toFixed(1)} y={l.y - 2} width={Math.min(l.after, NOTE.w - l.tag.w - 29).toFixed(1)} height="4" />
+                        </g>
+                      ) : (
+                        <rect class="txt" x={NOTE.x + 12} y={l.y - 2} width={l.bar!.toFixed(1)} height="4" />
+                      ),
+                    )}
+                    <rect class="spec" x={SPEC.x - 14} y={SPEC.y - 14} width="28" height="28" />
+                    <path class="spec-lines" d={`M${SPEC.x - 7} ${SPEC.y - 5} H${SPEC.x + 7} M${SPEC.x - 7} ${SPEC.y} H${SPEC.x + 7} M${SPEC.x - 7} ${SPEC.y + 5} H${SPEC.x + 3}`} />
+                    <text class="lbl" x={SPEC.x} y={SPEC.y + 32} text-anchor="middle">spec</text>
+                    {outRows.map((r) => (
+                      <g class:list={['row', `c-${r.tone}`]}>
+                        <rect class="row-box" x="238" y={r.y} width="146" height="20" />
+                        <rect class="txt" x="246" y={r.y + 5} width={r.a.toFixed(1)} height="3.6" />
+                        <rect class="txt soft" x="246" y={r.y + 11.5} width={r.b.toFixed(1)} height="3.6" />
+                        <circle class="dot" cx="372" cy={r.y + 10} r="3.6" />
+                      </g>
+                    ))}
+                    <text class="lbl" x="384" y="262" text-anchor="end">generated samples</text>
+                  </svg>
+                )}
+              </figure>
+              <div class="start-body">
+                <span class="start-key">{s.key}</span>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+                <ol class="start-steps">
+                  {s.steps.map((st) => (
+                    <li>{st}</li>
+                  ))}
+                </ol>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══ HOW AN ENGAGEMENT RUNS ═════════════════════════════════ -->
+  <section class="band" id="loop">
+    <div class="shell">
+      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">We build it with you, in rounds.</h2>
+      <p class="lede rv" data-rv style="--rv-delay:160ms">
+        We belive in review loops and feedback, not a single handoff. You approve the data at sample size before we generate the full
+        volume.
+      </p>
+
+      <div class="loop" data-loop>
+        <ol class="loop-list">
+          {
+            loopSteps.map((s, i) => (
+              <li class="loop-step" data-step={i}>
+                <span class:list={['loop-node', { spin: i === 2 }]} aria-hidden="true">
+                  {i === 2 && (
+                    <svg viewBox="0 0 24 24">
+                      <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
+                      <path d="M19.8 4.5v3.6h-3.6" />
+                    </svg>
+                  )}
+                </span>
+                <span class="loop-n">0{i + 1}</span>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+              </li>
+            ))
+          }
+        </ol>
+
+        <div class="csv-wrap">
+          <div class="csv" data-csv data-stage="-1" data-vsticky="104" aria-hidden="true">
+            <div class="csv-bar">
+              <span class="csv-file">
+                <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /></svg>
+                tranche.csv
+              </span>
+              <span class="csv-status">
+                <svg class="csv-spin" viewBox="0 0 24 24">
+                  <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
+                  <path d="M19.8 4.5v3.6h-3.6" />
+                </svg>
+                <svg class="csv-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                <span class="csv-states">
+                  {csvStatus.map((t, i) => (
+                    <span data-s={i}>{t}</span>
+                  ))}
+                </span>
+              </span>
+            </div>
+            <div class="csv-table">
+              <div class="csv-row csv-head">
+                <span>id</span>
+                <span>text</span>
+                <span>intent</span>
+                <span>review</span>
+              </div>
+              {
+                csvRows.map((r, i) => (
+                  <div class:list={['csv-row', { flagged: r.flag }]} style={`--i:${i}`}>
+                    <span class="c-id">{r.id}</span>
+                    <span class="c-text">
+                      {r.text2 ? (
+                        <>
+                          <span class="v1"><span><s>{r.text}</s></span></span>
+                          <span class="v2"><span>{r.text2}</span></span>
+                        </>
+                      ) : (
+                        r.text
+                      )}
+                    </span>
+                    <span class="c-intent">
+                      {r.intent2 ? (
+                        <>
+                          <span class="v1"><span><s>{r.intent}</s></span></span>
+                          <span class="v2"><span>{r.intent2}</span></span>
+                        </>
+                      ) : (
+                        r.intent
+                      )}
+                    </span>
+                    <span class="c-rev">
+                      <svg class="mk-o" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4.6" /></svg>
+                      <svg class="mk-v" viewBox="0 0 16 16"><path d="M3.8 8.4l2.8 2.8 5.6-6" /></svg>
+                      {r.flag && (
+                        <svg class="mk-x" viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" /></svg>
+                      )}
+                      {r.flag && <span class="c-flag">{r.flag}</span>}
+                    </span>
+                  </div>
+                ))
+              }
+              <div class="csv-more">
+                <div>
+                  {[0, 1, 2].map((k) => (
+                    <div class="csv-row csv-ghost" style={`--i:${k}`}>
+                      <span><i style="width:70%" /></span>
+                      <span><i style={`width:${[82, 64, 74][k]}%`} /></span>
+                      <span><i style={`width:${[60, 74, 52][k]}%`} /></span>
+                      <span class="c-rev">
+                        <svg class="mk-v" viewBox="0 0 16 16"><path d="M3.8 8.4l2.8 2.8 5.6-6" /></svg>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div class="csv-foot">
+              <span class="csv-meter"><i></i></span>
+              <span class="csv-count">
+                <span data-s="0">6 rows generated</span>
+                <span data-s="1">4 of 6 approved · 2 flagged</span>
+                <span data-s="2">6 of 6 approved</span>
+                <span data-s="3">Approved · scaling to full volume</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="deliver rv" data-rv>
+        <h3>What you receive</h3>
+        <ul>
+          {
+            deliverables.map((d) => (
+              <li>
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>
+                {d}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
 
   <!-- ═══ PUBLISHED DATASETS: staggered tiles with a row preview ═ -->
   <section class="band wash" id="datasets">
@@ -814,7 +1179,6 @@ const faqs = [
                   <span class="ds-viz" aria-hidden="true">
                     <svg viewBox="0 0 240 90" preserveAspectRatio="xMidYMid meet" set:html={VIZ[d.id] ?? ''} />
                   </span>
-                  {d.simula && <span class="ds-badge">Generated with Simula</span>}
                   <span class="ds-desc">{d.line}</span>
                 </a>
               ))}
@@ -825,153 +1189,6 @@ const faqs = [
     </div>
   </section>
 
-  <!-- ═══ HOW WE KEEP IT USABLE ══════════════════════════════════ -->
-  <section class="band band-tint" id="quality">
-    <div class="shell">
-      <div class="split-head">
-        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Synthetic data fails in known ways. We check for each one.</h2>
-        <p class="lede rv" data-rv style="--rv-delay:160ms">
-          It starts with a map. Your domain is split into factors and each grows into a tree, so every case is planned
-          before a single row is written.
-        </p>
-      </div>
-      <div class="controls">
-        <div class="controls-head" aria-hidden="true">
-          <span>The known failure</span>
-          <span>What we do about it</span>
-        </div>
-        {
-          controls.map((c, i) => (
-            <div class="control rv" data-rv style={`--rv-delay:${Math.min(i, 3) * 60}ms`}>
-              <span class="control-risk">
-                <span class="control-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" set:html={ICON[c.icon]} />
-                </span>
-                {c.risk}
-              </span>
-              <span class="control-fix">
-                <i aria-hidden="true"></i>
-                {c.fix}
-              </span>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ TWO WAYS TO START ══════════════════════════════════════ -->
-  <section class="band" id="start">
-    <div class="shell">
-      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Two ways to start.</h2>
-      <p class="lede rv" data-rv style="--rv-delay:160ms">It depends on what you already have. Either way, the taxonomy comes first.</p>
-
-      <div class="starts">
-        {
-          starts.map((s, i) => (
-            <article class="start rv" data-rv data-from={i ? 'right' : 'left'} style={`--rv-delay:${140 + i * 80}ms`}>
-              <figure class="start-art">
-                {i === 0 ? (
-                  <svg viewBox="0 0 400 276" role="img" aria-label="Existing data in two clusters, with two empty regions marked">
-                    {scatter.map((p) => (
-                      <circle class="pt" cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="2.6" />
-                    ))}
-                    {gaps.map((g) => (
-                      <g class="gap">
-                        <circle cx={g.x} cy={g.y} r={g.r} />
-                        <text x={g.x} y={g.y + 3.5}>
-                          empty
-                        </text>
-                      </g>
-                    ))}
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 400 276" role="img" aria-label="A description split into three factors, each with three leaves">
-                    {factorNodes.map((f) => (
-                      <path class="ln" d={curve(ROOT, f)} />
-                    ))}
-                    {leafNodes.map((l) => (
-                      <path class="ln" d={curve({ x: 168, y: l.fy }, l)} />
-                    ))}
-                    <rect class="root" x={ROOT.x - 7} y={ROOT.y - 7} width="14" height="14" />
-                    <text class="lbl" x={ROOT.x - 8} y={ROOT.y + 26}>
-                      your description
-                    </text>
-                    {factorNodes.map((f) => (
-                      <g>
-                        <circle class="fac" cx={f.x} cy={f.y} r="5" />
-                        <text class="lbl" x={f.x - 10} y={f.y - 13}>
-                          {f.label}
-                        </text>
-                      </g>
-                    ))}
-                    {leafNodes.map((l) => (
-                      <circle class="leaf" cx={l.x} cy={l.y} r="4.5" />
-                    ))}
-                  </svg>
-                )}
-              </figure>
-              <div class="start-body">
-                <span class="start-key">{s.key}</span>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
-                <ol class="start-steps">
-                  {s.steps.map((st) => (
-                    <li>{st}</li>
-                  ))}
-                </ol>
-              </div>
-            </article>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ HOW AN ENGAGEMENT RUNS ═════════════════════════════════ -->
-  <section class="band band-tint" id="loop">
-    <div class="shell">
-      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">We build it with you, in rounds.</h2>
-      <p class="lede rv" data-rv style="--rv-delay:160ms">A build and review loop, not a single handoff. You see the data before the full volume is generated.</p>
-
-      <div class="loop" data-loop>
-        <div class="loop-rail" aria-hidden="true"><span class="loop-fill"></span></div>
-        <ol class="loop-steps">
-          {
-            loopSteps.map((s, i) => (
-              <li class="loop-step" data-step={i}>
-                <span class="loop-node" aria-hidden="true"></span>
-                <span class="loop-n">0{i + 1}</span>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
-              </li>
-            ))
-          }
-        </ol>
-        <div class="loop-back" aria-hidden="true">
-          <svg viewBox="0 0 1000 56" preserveAspectRatio="none">
-            <path pathLength="1" d="M672 0 V30 Q672 46 656 46 H16 Q0 46 0 30 V2"></path>
-          </svg>
-          <span class="loop-arrow"></span>
-          <span class="loop-label">Repeat until your team signs off</span>
-        </div>
-      </div>
-
-      <div class="deliver rv" data-rv>
-        <h3>What you receive</h3>
-        <ul>
-          {
-            deliverables.map((d) => (
-              <li>
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>
-                {d}
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-    </div>
-  </section>
 
   <!-- ═══ BUILT ON SIMULA ════════════════════════════════════════ -->
   <section class="band" id="simula">
@@ -983,9 +1200,8 @@ const faqs = [
       <div class="sim-copy">
         <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Built on a pipeline we open-sourced.</h2>
         <p class="lede rv" data-rv style="--rv-delay:160ms">
-          Simula is the core of our generation work. We built it from our client projects and published it on GitHub,
-          with a research log of every stage. When a project needs something it does not do, we build that part for the
-          project.
+          Simula is the generation engine behind our client work. We built it out of years of projects, published it on
+          GitHub with a research log of every stage, and extend it whenever an engagement needs more.
         </p>
         <dl class="sim-stats rv" data-rv style="--rv-delay:220ms" data-counts>
           {
@@ -1009,41 +1225,49 @@ const faqs = [
         <div class="sim-links rv" data-rv style="--rv-delay:280ms">
           <a class="quiet" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">Simula on GitHub<span aria-hidden="true">↗</span></a>
           <a class="quiet" href={LOG_URL}>Read the research log<span aria-hidden="true">→</span></a>
-          <a class="quiet" href={HF_DATASETS_URL} target="_blank" rel="noopener noreferrer">Our datasets<span aria-hidden="true">↗</span></a>
+          <a class="quiet" href={OSS_URL}>How Simula works<span aria-hidden="true">→</span></a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═══ DOMAINS ════════════════════════════════════════════════ -->
-  <section class="band band-tint domains wash" id="domains">
-    <canvas class="wash-bg" data-backdrop="sdWashWarm" data-seed="9053" data-dpr="0.6" aria-hidden="true"></canvas>
+
+  <!-- ═══ PROOF STRIP ════════════════════════════════════════════ -->
+  <section class="strip-band">
     <div class="shell">
-      <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Domains where the hard cases are rare, regulated or missing.</h2>
-      <div class="uses rv" data-rv style="--rv-delay:160ms">
-        <span class="uses-h">The data goes into</span>
-        <ul>
-          {uses.map((u) => <li>{u}</li>)}
-        </ul>
-      </div>
-    </div>
-    <div class="mq rv" data-rv>
-      <div class="mq-track">
+      <div class="strip" data-counts>
         {
-          [0, 1].map((copy) => (
-            <ul aria-hidden={copy === 1 ? 'true' : undefined}>
-              {industries.map((name) => (
-                <li>{name}</li>
-              ))}
-            </ul>
+          strip.map((s, i) => (
+            <div class="strip-cell rv" data-rv style={`--rv-delay:${i * 80}ms`}>
+              <span class="strip-fig">
+                <span data-count={s.count} data-suffix={s.suffix}>
+                  {s.count.toLocaleString('en-US')}
+                  {s.suffix}
+                </span>
+              </span>
+              <span class="strip-label">
+                {s.label}
+                <span>{s.note}</span>
+              </span>
+            </div>
           ))
         }
+        <a class="strip-cell strip-link rv" data-rv style="--rv-delay:240ms" href="/contact">
+          <span class="strip-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" set:html={ICON.chat} />
+          </span>
+          <span>
+            Have a dataset in mind?
+            <b>Scope it with us →</b>
+          </span>
+        </a>
       </div>
     </div>
   </section>
 
+
   <!-- ═══ QUESTIONS ══════════════════════════════════════════════ -->
-  <section class="band" id="faq">
+  <section class="band band-tint" id="faq">
     <div class="shell faq-in">
       <h2 class="h2 rv" data-rv style="--rv-delay:80ms">What buyers ask us first.</h2>
       <div class="faq rv" data-rv style="--rv-delay:160ms">
@@ -1061,6 +1285,7 @@ const faqs = [
       </div>
     </div>
   </section>
+
 
   <!-- ═══ CLOSER ═════════════════════════════════════════════════ -->
   <section class="end">
@@ -1104,13 +1329,13 @@ const faqs = [
     const copy = hero && hero.querySelector('[data-sh-copy]');
     const loop = document.querySelector('[data-loop]');
     const steps = loop ? [...loop.querySelectorAll('[data-step]')] : [];
+    const csv = loop && loop.querySelector('[data-csv]');
 
     if (reduce) {
       if (hero) copy.dataset.live = 'true';
       if (loop) {
-        set(loop, '--r', 1);
-        set(loop, '--arc', 1);
         steps.forEach((s) => (s.dataset.on = 'true'));
+        csv.dataset.stage = loop.dataset.stage = '3';
       }
       return;
     }
@@ -1127,12 +1352,18 @@ const faqs = [
         set(hero, '--o', o * o);
         copy.dataset.live = o < 0.5 ? 'true' : 'false';
       }
+      /* The loop: a step is current once its top passes 66% of the
+         screen, so each state arrives a little ahead of the reader.
+         The CSV beside it shows that step's state, and the rail fills
+         to the current step. */
       if (loop) {
-        const r = loop.getBoundingClientRect();
-        const t = clamp((vh * 0.82 - r.top) / (vh * 0.5));
-        set(loop, '--r', t);
-        set(loop, '--arc', clamp((t - 0.82) / 0.18));
-        steps.forEach((s, i) => (s.dataset.on = t >= i / 3 + 0.02 ? 'true' : 'false'));
+        const line = vh * 0.66;
+        let stage = -1;
+        steps.forEach((s, i) => {
+          if (s.getBoundingClientRect().top < line) stage = i;
+        });
+        steps.forEach((s, i) => (s.dataset.on = i <= stage ? 'true' : 'false'));
+        csv.dataset.stage = loop.dataset.stage = String(stage);
       }
     };
 
@@ -1153,7 +1384,7 @@ const faqs = [
   })();
 
   /* ── Problem nodes: a curve from the hub to each node, drawn when
-     the figure comes into view, with a pulse running out along it. ── */
+     the figure comes into view, with a pulse running in along it. ── */
   (() => {
     const root = document.querySelector('[data-nodes]');
     if (!root) return;
@@ -1201,7 +1432,8 @@ const faqs = [
         move.setAttribute('dur', '2.8s');
         move.setAttribute('repeatCount', 'indefinite');
         move.setAttribute('begin', -(i * 0.47).toFixed(2) + 's');
-        move.setAttribute('keyPoints', '0;1');
+        // Inward: each problem runs into the hub that answers it.
+        move.setAttribute('keyPoints', '1;0');
         move.setAttribute('keyTimes', '0;1');
         move.setAttribute('calcMode', 'spline');
         move.setAttribute('keySplines', '0.4 0 0.2 1');
@@ -1753,7 +1985,7 @@ const faqs = [
     transform: none;
   }
   .sh-copy h1 {
-    max-width: 16ch;
+    max-width: 18ch;
     font-family: var(--hero-serif);
     font-size: clamp(36px, 5.6vw, 72px);
     font-weight: 400;
@@ -1764,7 +1996,7 @@ const faqs = [
   }
   .sh-copy p {
     margin-top: 24px;
-    max-width: 56ch;
+    max-width: 62ch;
     font-size: clamp(14.85px, 1.4vw, 16.65px);
     line-height: 1.74;
     color: hsl(0 0% 100% / 0.86);
@@ -1841,7 +2073,7 @@ const faqs = [
   /* ══ PROOF STRIP ═════════════════════════════════════════════ */
   .strip-band {
     background: var(--surface);
-    border-bottom: 1px solid var(--line);
+    border-block: 1px solid var(--line);
   }
   .strip {
     display: grid;
@@ -1998,15 +2230,27 @@ const faqs = [
     width: 100%;
     height: 100%;
   }
+  .hub-eyebrow,
   .hub-word,
   .hub-note {
     position: relative;
   }
+  .hub-eyebrow {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: hsl(0 0% 100% / 0.78);
+  }
   .hub-word {
+    padding-inline: 18px;
+    text-wrap: balance;
     font-family: var(--hero-serif);
     font-style: italic;
     font-size: clamp(28px, 2.8vw, 36px);
+    line-height: 1.08;
     letter-spacing: -0.02em;
+    text-align: center;
     text-shadow: 0 8px 26px hsl(243 80% 16% / 0.5);
   }
   .hub-note {
@@ -2062,6 +2306,25 @@ const faqs = [
     font-weight: 400;
     letter-spacing: -0.012em;
     color: var(--ink);
+  }
+  /* What the engineered dataset does about it, in teal. */
+  .node-fix {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 7px;
+    font-family: var(--mono);
+    font-size: 10.35px;
+    line-height: 1.4;
+    color: var(--teal-700);
+  }
+  .node-fix::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    background: var(--teal-500);
+    transform: rotate(45deg);
   }
   @media (max-width: 900px) {
     .nodes {
@@ -2178,11 +2441,6 @@ const faqs = [
   .wash > :not(.wash-bg) {
     position: relative;
     z-index: 1;
-  }
-  /* Labels in the domains band sat on the flat tint; on the wash they
-     get a white ground so they still read as chips. */
-  .wash .uses li {
-    background: hsl(0 0% 100% / 0.85);
   }
   .wash .mq {
     background: hsl(0 0% 100% / 0.45);
@@ -2523,18 +2781,6 @@ const faqs = [
     font-size: 7.2px;
     fill: var(--ink-2);
   }
-  .ds-badge {
-    align-self: flex-start;
-    margin-top: 12px;
-    padding: 3px 8px;
-    font-family: var(--mono);
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #fff;
-    background: var(--indigo-600);
-  }
   .ds-desc {
     margin-top: auto;
     padding-top: 18px;
@@ -2670,51 +2916,130 @@ const faqs = [
     max-height: 250px;
     overflow: visible;
   }
+  /* A: the data, its grid and its gaps. Teal is the data; amber marks
+     only what is missing, which is the one signal in the figure. */
+  .start-art .grid {
+    fill: none;
+    stroke: var(--n-200);
+    stroke-width: 1;
+  }
+  .start-art .axis {
+    fill: none;
+    stroke: var(--n-400);
+    stroke-width: 1.2;
+  }
   .start-art .pt {
     fill: var(--teal-500);
     opacity: 0.72;
   }
-  .start-art .gap circle {
-    fill: hsl(34 84% 53% / 0.08);
+  .start-art .hatch {
+    stroke: var(--amber-500);
+    stroke-width: 1;
+    opacity: 0.5;
+  }
+  .start-art .miss {
+    fill: url(#st-hatch);
     stroke: var(--amber-500);
     stroke-width: 1.2;
-    stroke-dasharray: 4 4;
+    stroke-dasharray: 4 3;
+  }
+  .start-art .rare {
     transform-box: fill-box;
     transform-origin: center;
     animation: breathe 3.2s ease-in-out infinite;
-  }
-  .start-art .gap text {
-    font-family: var(--mono);
-    font-size: 10px;
-    text-anchor: middle;
-    letter-spacing: 0.1em;
-    fill: var(--amber-800);
   }
   @keyframes breathe {
     50% {
       transform: scale(1.07);
     }
   }
+  .start-art .tag rect {
+    fill: var(--surface);
+    stroke: var(--amber-500);
+    stroke-width: 1;
+  }
+  .start-art .tag text {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    text-anchor: middle;
+    letter-spacing: 0.06em;
+    fill: var(--amber-800);
+  }
+  .start-art .lbl {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    fill: var(--ink-2);
+  }
+  /* B: expert notes → a spec → generated samples. The three marked
+     rules each have a colour, and every sample carries the colour of
+     the rule it covers. */
   .start-art .ln {
     fill: none;
     stroke: var(--n-300);
     stroke-width: 1.2;
   }
-  .start-art .root {
+  .start-art .note {
+    fill: var(--surface);
+    stroke: var(--line-2);
+    stroke-width: 1.2;
+  }
+  .start-art .head {
+    fill: var(--indigo-100);
+    stroke: var(--indigo-600);
+    stroke-width: 1.2;
+  }
+  .start-art .head-b {
+    fill: none;
+    stroke: var(--indigo-600);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+  }
+  .start-art .txt {
+    fill: var(--n-300);
+  }
+  .start-art .txt.soft {
+    fill: var(--n-200);
+  }
+  .start-art .chip rect:first-child {
+    stroke-width: 1;
+  }
+  .start-art .chip text {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-anchor: middle;
+    fill: var(--ink);
+  }
+  .start-art .c-i rect:first-child,
+  .start-art .c-i .dot {
+    fill: hsl(243 85% 94%);
+    stroke: var(--indigo-500);
+  }
+  .start-art .c-t rect:first-child,
+  .start-art .c-t .dot {
+    fill: hsl(178 55% 90%);
+    stroke: var(--teal-500);
+  }
+  .start-art .c-p rect:first-child,
+  .start-art .c-p .dot {
+    fill: hsl(22 95% 92%);
+    stroke: hsl(22 90% 58%);
+  }
+  .start-art .row .row-box {
+    fill: var(--surface);
+    stroke: var(--line-2);
+    stroke-width: 1;
+  }
+  .start-art .row .dot {
+    stroke-width: 1.2;
+  }
+  .start-art .spec {
     fill: var(--indigo-600);
   }
-  .start-art .fac {
-    fill: var(--surface);
-    stroke: var(--indigo-600);
-    stroke-width: 1.6;
-  }
-  .start-art .leaf {
-    fill: var(--teal-500);
-  }
-  .start-art .lbl {
-    font-family: var(--mono);
-    font-size: 11px;
-    fill: var(--ink-2);
+  .start-art .spec-lines {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.4;
+    stroke-linecap: round;
   }
   .start-body {
     padding: 26px 28px 28px;
@@ -2771,47 +3096,65 @@ const faqs = [
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .start-art .gap circle {
+    .start-art .rare {
       animation: none;
     }
   }
 
   /* ══ THE LOOP ════════════════════════════════════════════════
-     A rail fills with the scroll and lights each step as it passes;
-     then the return path draws back to the start. */
+     The steps run down the left; a step lights once it passes 58% of
+     the screen. Beside them a CSV sticks and changes with the step:
+     rows generate, a review column marks each with an O or an X, the
+     flagged rows are regenerated, then the dataset scales. */
   .loop {
-    --r: 0;
-    --arc: 0;
-    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(36px, 5vw, 72px);
     margin-top: 52px;
   }
-  .loop-rail {
+  .loop-list {
     position: relative;
-    height: 1px;
-    background: var(--line-2);
-  }
-  .loop-fill {
-    position: absolute;
-    inset: 0;
-    background: var(--indigo-600);
-    transform-origin: left;
-    transform: scaleX(var(--r));
-  }
-  .loop-steps {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0 clamp(24px, 3.4vw, 46.8px);
+    padding-left: 44px;
   }
   .loop-step {
     position: relative;
-    padding-top: 30px;
+    min-height: 42vh;
+    padding-bottom: 28px;
+  }
+  /* The last step keeps some height of its own, so the CSV, which grows
+     on this step, has room to stay pinned instead of being pushed up
+     under the nav by the end of the section. */
+  .loop-step:last-child {
+    min-height: 36vh;
+    padding-bottom: 0;
+  }
+  /* The rail, one segment per gap between steps. It fills once the
+     next step is lit. */
+  .loop-step:not(:last-child)::before,
+  .loop-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: -38.5px;
+    top: 22px;
+    bottom: -2px;
+    width: 1px;
+    background: var(--line-2);
+  }
+  .loop-step:not(:last-child)::after {
+    background: var(--indigo-600);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 700ms var(--ease);
+  }
+  .loop-step:has(+ .loop-step[data-on='true'])::after {
+    transform: scaleY(1);
   }
   .loop-node {
     position: absolute;
-    left: 0;
-    top: -6px;
-    width: 11px;
-    height: 11px;
+    left: -44px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
     background: var(--n-100);
     border: 1px solid var(--line-2);
     transition:
@@ -2824,6 +3167,42 @@ const faqs = [
     border-color: var(--indigo-600);
     transform: rotate(45deg);
   }
+  /* The refine step's node is a circular arrow, turning while it is
+     the current step. */
+  .loop-node.spin {
+    left: -50px;
+    top: -1px;
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+    color: var(--n-400);
+    background: var(--surface);
+    border-color: var(--line-2);
+    border-radius: 50%;
+  }
+  .loop-step[data-on='true'] .loop-node.spin {
+    color: #fff;
+    background: var(--indigo-600);
+    transform: none;
+  }
+  .loop-node.spin svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .loop[data-stage='2'] .loop-node.spin svg {
+    animation: turn 1.6s linear infinite;
+  }
+  @keyframes turn {
+    to {
+      transform: rotate(360deg);
+    }
+  }
   .loop-n {
     font-family: var(--mono);
     font-size: 10.35px;
@@ -2834,7 +3213,7 @@ const faqs = [
     color: var(--indigo-600);
   }
   .loop-step h3 {
-    margin-top: 12px;
+    margin-top: 10px;
     font-family: var(--hero-serif);
     font-size: 22.5px;
     font-weight: 400;
@@ -2843,7 +3222,7 @@ const faqs = [
   }
   .loop-step p {
     margin-top: 8px;
-    max-width: 36ch;
+    max-width: 38ch;
     font-size: 13.5px;
     line-height: 1.7;
     color: var(--ink-3);
@@ -2858,81 +3237,344 @@ const faqs = [
   .loop-step[data-on='true'] p {
     opacity: 1;
   }
-  .loop-back {
+
+  /* ── The CSV ── */
+  .csv-wrap {
     position: relative;
-    margin-top: 26px;
-    height: 56px;
   }
-  .loop-back svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
+  .csv {
+    position: sticky;
+    top: 104px;
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    box-shadow: 0 30px 60px -44px hsl(243 60% 30% / 0.4);
   }
-  .loop-back path {
-    fill: none;
-    stroke: var(--indigo-500);
-    stroke-width: 1.2;
-    stroke-dasharray: 1;
-    stroke-dashoffset: calc(1 - var(--arc));
+  :global(html[data-vscroll]) .csv {
+    position: relative;
+    top: auto;
   }
-  .loop-arrow {
-    position: absolute;
-    left: -4px;
-    top: -2px;
-    width: 9px;
-    height: 9px;
-    border-top: 1.2px solid var(--indigo-500);
-    border-left: 1.2px solid var(--indigo-500);
-    transform: rotate(45deg);
-    opacity: clamp(0, calc(var(--arc) * 8 - 7), 1);
-  }
-  .loop-label {
-    position: absolute;
-    left: 33.6%;
-    bottom: 0;
-    transform: translate(-50%, 50%);
-    padding: 3px 12px;
-    background: var(--n-100);
+  .csv-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: var(--n-50);
+    border-bottom: 1px solid var(--line-2);
     font-family: var(--mono);
-    font-size: 9.9px;
+    font-size: 10.35px;
+    color: var(--ink-2);
+  }
+  .csv-file,
+  .csv-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .csv-bar svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .csv-status {
+    color: var(--indigo-600);
+    transition: color 400ms var(--ease);
+  }
+  .csv-spin,
+  .csv-ok {
+    display: none;
+  }
+  .csv[data-stage='-1'] .csv-spin,
+  .csv[data-stage='0'] .csv-spin,
+  .csv[data-stage='2'] .csv-spin {
+    display: block;
+    animation: turn 1.4s linear infinite;
+  }
+  .csv[data-stage='1'] .csv-status {
+    color: var(--amber-800);
+  }
+  .csv[data-stage='3'] .csv-status {
+    color: var(--teal-700);
+  }
+  .csv[data-stage='3'] .csv-ok {
+    display: block;
+  }
+  /* Stacked labels; the one for the current stage shows. */
+  .csv-states,
+  .csv-count {
+    display: grid;
+  }
+  .csv-states > span,
+  .csv-count > span {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 400ms var(--ease);
+  }
+  .csv[data-stage='-1'] [data-s='0'],
+  .csv[data-stage='0'] [data-s='0'],
+  .csv[data-stage='1'] [data-s='1'],
+  .csv[data-stage='2'] [data-s='2'],
+  .csv[data-stage='3'] [data-s='3'] {
+    opacity: 1;
+  }
+  .csv-states > span {
+    text-align: right;
+  }
+
+  .csv-row {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 112px 118px;
+    gap: 12px;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    transition:
+      opacity 500ms var(--ease) calc(var(--i, 0) * 90ms),
+      transform 500ms var(--ease) calc(var(--i, 0) * 90ms),
+      background 500ms var(--ease);
+  }
+  .csv-head {
+    padding-block: 9px;
+    font-family: var(--mono);
+    font-size: 9.45px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--indigo-600);
-    opacity: var(--arc);
+    color: var(--n-400);
   }
-  @media (max-width: 820px) {
-    .loop-rail,
-    .loop-back svg,
-    .loop-arrow {
-      display: none;
-    }
-    .loop-steps {
+  .csv[data-stage='-1'] .csv-row:not(.csv-head) {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .c-id {
+    font-family: var(--mono);
+    font-size: 10.35px;
+    color: var(--n-400);
+  }
+  .c-text {
+    display: grid;
+    font-size: 12.6px;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .c-intent {
+    display: grid;
+    font-family: var(--mono);
+    font-size: 10.35px;
+    color: var(--teal-700);
+    overflow-wrap: anywhere;
+  }
+  /* A regenerated row. On refine the old value is struck through and
+     the new one opens beneath it; on delivery the struck value folds
+     away. Each value sits in a 0fr/1fr grid row so it can collapse
+     smoothly. */
+  .v1,
+  .v2 {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows 600ms var(--ease),
+      opacity 500ms var(--ease),
+      color 500ms var(--ease);
+  }
+  .v1 > span,
+  .v2 > span {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .v2 {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  .v1 s {
+    text-decoration: none;
+    background: linear-gradient(var(--amber-500), var(--amber-500)) no-repeat 0 58% / 0% 1.3px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: background-size 600ms var(--ease);
+  }
+  .csv[data-stage='2'] .v1 {
+    color: var(--n-400);
+  }
+  .csv[data-stage='2'] .v1 s,
+  .csv[data-stage='3'] .v1 s {
+    background-size: 100% 1.3px;
+  }
+  .csv[data-stage='2'] .v2,
+  .csv[data-stage='3'] .v2 {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition-delay: 250ms;
+  }
+  .csv[data-stage='3'] .v1 {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  /* Review marks: an O for a row that passes, an X for a flag. */
+  .c-rev {
+    position: relative;
+    height: 16px;
+  }
+  .c-rev svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    opacity: 0;
+    transform: scale(0.4);
+    transition:
+      opacity 400ms var(--ease) calc(var(--i, 0) * 70ms),
+      transform 400ms var(--ease) calc(var(--i, 0) * 70ms);
+  }
+  .mk-o,
+  .mk-v {
+    stroke: var(--teal-500);
+  }
+  .mk-v {
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .mk-x {
+    stroke: var(--amber-500);
+  }
+  .c-flag {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    padding: 1px 6px;
+    font-family: var(--mono);
+    font-size: 9px;
+    white-space: nowrap;
+    color: var(--amber-800);
+    background: var(--amber-100);
+    opacity: 0;
+    transform: translateY(-50%);
+    transition: opacity 400ms var(--ease);
+  }
+  /* Review: an O for a pass, an X for a flag. Refine: the flags turn
+     to ticks. Delivery: every row, the new ones too, ends on a tick. */
+  .csv[data-stage='1'] .csv-row:not(.flagged) .mk-o,
+  .csv[data-stage='1'] .flagged .mk-x,
+  .csv[data-stage='2'] .csv-row:not(.flagged) .mk-o,
+  .csv[data-stage='2'] .flagged .mk-v,
+  .csv[data-stage='3'] .mk-v {
+    opacity: 1;
+    transform: none;
+  }
+  .csv[data-stage='3'] .csv-ghost .mk-v {
+    transition-delay: calc(500ms + var(--i) * 120ms);
+  }
+  .csv[data-stage='1'] .c-flag {
+    opacity: 1;
+  }
+  .csv[data-stage='1'] .flagged {
+    background: hsl(34 82% 92% / 0.55);
+  }
+  .csv[data-stage='2'] .flagged {
+    background: hsl(178 38% 92% / 0.7);
+  }
+  /* The last step: more rows arrive under the approved ones. */
+  .csv-more {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 700ms var(--ease);
+  }
+  .csv-more > div {
+    overflow: hidden;
+  }
+  .csv[data-stage='3'] .csv-more {
+    grid-template-rows: 1fr;
+  }
+  .csv-ghost {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .csv[data-stage='3'] .csv-ghost {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(200ms + var(--i) * 120ms);
+  }
+  .csv-ghost i {
+    display: block;
+    height: 5px;
+    background: var(--n-200);
+  }
+  .csv-ghost span:nth-child(3) i {
+    background: hsl(178 38% 86%);
+  }
+  .csv-foot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: var(--n-50);
+    font-family: var(--mono);
+    font-size: 10.35px;
+    color: var(--ink-2);
+  }
+  .csv-meter {
+    position: relative;
+    flex: none;
+    width: 120px;
+    height: 4px;
+    background: var(--n-200);
+  }
+  .csv-meter i {
+    position: absolute;
+    inset: 0;
+    background: var(--teal-500);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 700ms var(--ease);
+  }
+  .csv[data-stage='1'] .csv-meter i {
+    transform: scaleX(0.667);
+  }
+  .csv[data-stage='2'] .csv-meter i,
+  .csv[data-stage='3'] .csv-meter i {
+    transform: scaleX(1);
+  }
+  @media (max-width: 900px) {
+    .loop {
       grid-template-columns: minmax(0, 1fr);
-      gap: 0;
-      padding-left: 22px;
-      border-left: 1px solid var(--line-2);
+    }
+    .csv-wrap {
+      order: -1;
+    }
+    .csv,
+    :global(html[data-vscroll]) .csv {
+      position: relative;
+      top: auto;
     }
     .loop-step {
-      padding-block: 6px 26px;
+      min-height: 0;
+      padding-bottom: 34px;
     }
-    .loop-node {
-      left: -28px;
-      top: 8px;
+  }
+  @media (max-width: 560px) {
+    .csv-row {
+      grid-template-columns: minmax(0, 1fr) 84px 26px;
+      padding-inline: 12px;
     }
-    .loop-back {
-      height: auto;
-      margin-top: 4px;
+    .c-id,
+    .csv-head span:first-child,
+    .csv-ghost span:first-child,
+    .c-flag {
+      display: none;
     }
-    .loop-label {
-      position: static;
-      transform: none;
-      display: inline-block;
-      padding: 0;
-      background: none;
-      white-space: normal;
-      opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .csv-spin,
+    .loop-node.spin svg {
+      animation: none !important;
     }
   }
   .deliver {
@@ -3079,32 +3721,6 @@ const faqs = [
   /* ══ DOMAINS ═════════════════════════════════════════════════ */
   .domains .h2 {
     max-width: 24ch;
-  }
-  .uses {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 18px;
-    margin-top: 26px;
-  }
-  .uses-h {
-    font-family: var(--mono);
-    font-size: 9.9px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-  }
-  .uses ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .uses li {
-    padding: 5px 11px;
-    font-size: 12.6px;
-    color: var(--ink-2);
-    background: var(--surface);
-    border: 1px solid var(--line-2);
   }
   /* Industries, drifting past. Faded at both edges, paused on hover. */
   .mq {
