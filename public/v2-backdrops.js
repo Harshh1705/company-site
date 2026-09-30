@@ -1093,6 +1093,76 @@
       ], hsl2rgb(243, 80, 26));
     },
 
+    /* ── LLM guardrails service (/services/llm-guardrails) ──────── */
+
+    // CORAL STRATA — sdStrata's construction on a warm ramp: coral at
+    // the base rising through apricot to a pale peach, with a peach
+    // pool at the centre so dark type reads on it. Used for the
+    // guardrails page's hero, the "ship with proof" card and the closer.
+    grStrata(ctx, w, h, seed) {
+      strata(ctx, w, h, seed, [
+        hsl2rgb(0, 79, 55),
+        hsl2rgb(6, 85, 61),
+        hsl2rgb(11, 90, 67),
+        hsl2rgb(17, 94, 73),
+        hsl2rgb(23, 96, 79),
+        hsl2rgb(28, 97, 85),
+      ], hsl2rgb(20, 96, 80));
+    },
+
+    // WARM FIELD — the light counterpart of grEmber: the design lab's
+    // "Blur field" (blurred sources, no geometry, no dither) in soft
+    // apricot, peach and blush over a pale warm ground, with only a
+    // trace of grain. Low contrast, so dark type reads straight on it.
+    // Behind the guardrails page's "safety alignment" section.
+    grWash(ctx, w, h, seed) {
+      const r = rng(seed);
+      const TINTS = [
+        hsl2rgb(20, 88, 88),
+        hsl2rgb(30, 92, 89),
+        hsl2rgb(12, 80, 90),
+        hsl2rgb(38, 94, 90),
+        hsl2rgb(356, 64, 92),
+      ];
+      ctx.fillStyle = css(hsl2rgb(22, 88, 95));
+      ctx.fillRect(0, 0, w, h);
+      ctx.filter = `blur(${Math.round(Math.min(w, h) * 0.24)}px)`;
+      for (let i = 0; i < 7; i++) {
+        ctx.fillStyle = css(TINTS[i % TINTS.length]);
+        ctx.beginPath();
+        ctx.ellipse(r() * w, r() * h, w * (0.14 + r() * 0.2), h * (0.26 + r() * 0.36), r() * 3.14, 0, 6.29);
+        ctx.fill();
+      }
+      ctx.filter = 'none';
+      grain(ctx, w, h, 4, true);
+    },
+
+    // EMBER FIELD — the design lab's "Blur field" (blurred sources, no
+    // geometry left) in dark warm tones: brick, terracotta and umber
+    // over a deep brown ground, with only a trace of grain. The
+    // guardrails page's control-layer section sits on it.
+    grEmber(ctx, w, h, seed) {
+      const r = rng(seed);
+      const TINTS = [
+        hsl2rgb(10, 46, 24),
+        hsl2rgb(18, 50, 21),
+        hsl2rgb(4, 40, 19),
+        hsl2rgb(24, 44, 26),
+        hsl2rgb(350, 32, 17),
+      ];
+      ctx.fillStyle = css(hsl2rgb(14, 32, 10));
+      ctx.fillRect(0, 0, w, h);
+      ctx.filter = `blur(${Math.round(Math.min(w, h) * 0.22)}px)`;
+      for (let i = 0; i < 7; i++) {
+        ctx.fillStyle = css(TINTS[i % TINTS.length]);
+        ctx.beginPath();
+        ctx.ellipse(r() * w, r() * h, w * (0.14 + r() * 0.2), h * (0.24 + r() * 0.36), r() * 3.14, 0, 6.29);
+        ctx.fill();
+      }
+      ctx.filter = 'none';
+      grain(ctx, w, h, 5, true);
+    },
+
     // WASH — "All three" from /design.html (blur → dither → grain),
     // kept light enough for ink to sit on it. Stronger than blurlight:
     // indigo and teal tints with a little warmth, larger sources, a
