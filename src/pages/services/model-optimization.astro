@@ -489,7 +489,7 @@ const faqs = [
       </ol>
 
       <div class="pipe-ask rv" data-rv>
-        <p>Every engagement starts at stage 01. Send the model and the number it has to hit.</p>
+        <p>Every engagement starts at stage 01. <br />Send the model and the number it has to hit.</p>
         <a class="wipe" href="/contact">
           <span class="wipe-fill"></span>
           <span class="wipe-label">Start with a baseline</span>
@@ -791,7 +791,13 @@ const faqs = [
     <div class="shell">
       <div class="split-head">
         <h2 class="h2 rv" data-rv style="--rv-delay:80ms">If this is your situation, we should talk.</h2>
-        <p class="lede rv" data-rv style="--rv-delay:160ms">Six bottlenecks we take on.</p>
+        <div class="head-ask rv" data-rv style="--rv-delay:160ms">
+          <a class="wipe" href="/contact">
+            <span class="wipe-fill"></span>
+            <span class="wipe-label">Tell us your situation</span>
+            <span class="wipe-label" aria-hidden="true">→</span>
+          </a>
+        </div>
       </div>
       <div class="ba" role="table">
         <div class="ba-row ba-head" role="row">
@@ -1166,7 +1172,16 @@ const faqs = [
     margin-top: 0;
     padding-bottom: 5.4px;
   }
+  /* A button in the lede's place, at the head's right edge. */
+  .head-ask {
+    display: flex;
+    justify-content: flex-end;
+    padding-bottom: 5.4px;
+  }
   @media (max-width: 860px) {
+    .head-ask {
+      justify-content: flex-start;
+    }
     .split-head {
       grid-template-columns: minmax(0, 1fr);
     }
