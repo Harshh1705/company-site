@@ -90,10 +90,10 @@ const chain = [
 
 /* ── Who: the question, then the buyers ────────────────────────── */
 const touches = [
-  { icon: 'customers', title: 'Customers', line: 'Speaks for your brand.' },
-  { icon: 'money', title: 'Money', line: 'Moves funds, grants refunds.' },
-  { icon: 'records', title: 'Regulated data', line: 'Reads health, finance, legal records.' },
-  { icon: 'systems', title: 'Live systems', line: 'Calls tools, writes to systems.' },
+  { icon: 'customers', title: 'Talks to customers', line: 'Support, sales and advice in your name.' },
+  { icon: 'money', title: 'Moves money', line: 'Refunds, payments and pricing.' },
+  { icon: 'records', title: 'Reads regulated data', line: 'Health, financial and legal records.' },
+  { icon: 'systems', title: 'Acts on live systems', line: 'Tools, CRMs, code and deployments.' },
 ];
 const buyers = [
   {
@@ -262,10 +262,10 @@ const faqs = [
       <div class="sh-copy" data-sh-copy data-live="true">
         <div class="shell sh-copy-in">
           <div class="sh-text">
-            <h1 class="sh-in">We build guardrails for your complex AI pipelines</h1>
+            <h1 class="sh-in">Guardrails that introduce control in your AI pipelines</h1>
             <p class="sh-in d1">
               We build the control layer between your model and everything it touches: customers, money, regulated data
-              and live systems. Every guardrail is written to your policy, attacked before launch, and delivered with the
+              and live systems. <br /> Every guardrail is written to your policy, attacked before launch, and delivered with the
               evidence your security review asks for.
             </p>
             <div class="sh-actions sh-in d2">
@@ -397,22 +397,7 @@ const faqs = [
     <div class="shell">
       <div class="split-head">
         <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Who we build guardrails for.</h2>
-        <p class="lede rv" data-rv style="--rv-delay:160ms">We look at what your AI can touch, not at company size.</p>
-      </div>
-
-      <div class="touches">
-        {
-          touches.map((t, i) => (
-            <div class="touch rv" data-rv style={`--rv-delay:${80 + i * 70}ms`}>
-              <span class="touch-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" set:html={ICON[t.icon]} />
-              </span>
-              <h3>{t.title}</h3>
-              <p>{t.line}</p>
-              <span class="touch-gate" aria-hidden="true"></span>
-            </div>
-          ))
-        }
+        <p class="lede rv" data-rv style="--rv-delay:160ms">Teams putting AI in front of customers, money or regulated data.</p>
       </div>
 
       <h3 class="sub-h rv" data-rv>Typical clients</h3>
@@ -429,6 +414,23 @@ const faqs = [
                 <span class="buyer-chip">{b.chip}</span>
               </div>
             </article>
+          ))
+        }
+      </div>
+
+      <h3 class="sub-h sub-h-lead rv" data-rv>Your AI needs guardrails if it does any of these four things:</h3>
+
+      <div class="touches">
+        {
+          touches.map((t, i) => (
+            <div class="touch rv" data-rv style={`--rv-delay:${80 + i * 70}ms`}>
+              <span class="touch-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" set:html={ICON[t.icon]} />
+              </span>
+              <h3>{t.title}</h3>
+              <p>{t.line}</p>
+              <span class="touch-gate" aria-hidden="true"></span>
+            </div>
           ))
         }
       </div>
@@ -606,10 +608,11 @@ const faqs = [
     <canvas class="hearth-bg" data-backdrop="grEmber" data-seed="4412" data-dpr="0.5" aria-hidden="true"></canvas>
     <div class="shell">
       <div class="split-head">
-        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Four layers of control, not one filter.</h2>
-        <p class="lede rv" data-rv style="--rv-delay:160ms">
-          Input, model, output, action.
-        </p>
+        <div class="rv" data-rv style="--rv-delay:80ms">
+          <span class="svc">Our service · What we build</span>
+          <h2 class="h2">We deliver control at every layer: input, model, output and action.</h2>
+        </div>
+        <p class="lede rv" data-rv style="--rv-delay:160ms">Guardrails introduce control layers that catch unsafe requests as soon as they are detected.</p>
       </div>
 
       <figure class="cl rv" data-rv data-cl>
@@ -692,57 +695,13 @@ const faqs = [
     </div>
   </section>
 
-  <!-- ═══ COMPLIANCE MAPPING ═════════════════════════════════════ -->
-  <section class="band band-tint wash" id="compliance">
-    <canvas class="wash-bg" data-backdrop="grWash" data-seed="5903" data-dpr="0.5" aria-hidden="true"></canvas>
-    <div class="shell">
-      <div class="split-head">
-        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Engineered for compliance and audits</h2>
-        <p class="lede rv" data-rv style="--rv-delay:160ms">
-          Every control we build ships with the document your auditor asks for.
-        </p>
-      </div>
-
-      <div class="map" data-map>
-        <svg class="map-lines" aria-hidden="true"></svg>
-        <div class="map-col map-left">
-          <span class="map-h">The framework, and what it presses on</span>
-          {
-            frameworks.map((f, i) => (
-              <div class="map-f rv" data-rv data-f={i} data-to={f.to.join(',')} style={`--rv-delay:${i * 50}ms`}>
-                <b>{f.name}</b>
-                <span>{f.line}</span>
-                <span class="map-chips" aria-label={`Answered by: ${f.to.map((j) => artifacts[j]).join(', ')}`}>
-                  {f.to.map((j) => (
-                    <i>{artifacts[j]}</i>
-                  ))}
-                </span>
-              </div>
-            ))
-          }
-        </div>
-        <div class="map-col map-right">
-          <span class="map-h">What you receive</span>
-          {
-            artifacts.map((a, j) => (
-              <div class="map-a rv" data-rv data-a={j} style={`--rv-delay:${120 + j * 50}ms`}>
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>
-                {a}
-              </div>
-            ))
-          }
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ═══ IN-HOUSE, OR WITH US ═══════════════════════════════════ -->
   <section class="band" id="build">
     <div class="shell">
       <div class="split-head">
         <h2 class="h2 rv" data-rv style="--rv-delay:80ms">Can your team build this in-house?</h2>
         <p class="lede rv" data-rv style="--rv-delay:160ms">
-          If guardrails are your product, yes. For everyone else, this is how it usually goes.
+          If you build guardrails as your core product, yes. For everyone else, this is how it usually goes.
         </p>
       </div>
 
@@ -793,9 +752,12 @@ const faqs = [
     <canvas class="wash-bg" data-backdrop="grWash" data-seed="7481" data-dpr="0.5" aria-hidden="true"></canvas>
     <div class="shell">
       <div class="split-head">
-        <h2 class="h2 rv" data-rv style="--rv-delay:80ms">How an engagement runs.</h2>
+        <div class="rv" data-rv style="--rv-delay:80ms">
+          <span class="svc">Our service · How it runs, what you receive</span>
+          <h2 class="h2">How an engagement runs, and what it leaves you with.</h2>
+        </div>
         <p class="lede rv" data-rv style="--rv-delay:160ms">
-          Evaluation finds the failures. Guardrails stop them.
+          Evaluation finds the failures. Guardrails stop them. Each layer ships with the document your auditor asks for.
         </p>
       </div>
 
@@ -817,6 +779,38 @@ const faqs = [
         </ol>
         <div class="flow-loop" aria-hidden="true">
           <span>Re-test on every model change</span>
+        </div>
+      </div>
+
+      <h3 class="sub-h sub-h-lead rv" data-rv id="compliance">Engineered for compliance and audits.</h3>
+      <div class="map" data-map>
+        <svg class="map-lines" aria-hidden="true"></svg>
+        <div class="map-col map-left">
+          <span class="map-h">The framework, and what it presses on</span>
+          {
+            frameworks.map((f, i) => (
+              <div class="map-f rv" data-rv data-f={i} data-to={f.to.join(',')} style={`--rv-delay:${i * 50}ms`}>
+                <b>{f.name}</b>
+                <span>{f.line}</span>
+                <span class="map-chips" aria-label={`Answered by: ${f.to.map((j) => artifacts[j]).join(', ')}`}>
+                  {f.to.map((j) => (
+                    <i>{artifacts[j]}</i>
+                  ))}
+                </span>
+              </div>
+            ))
+          }
+        </div>
+        <div class="map-col map-right">
+          <span class="map-h">What you receive</span>
+          {
+            artifacts.map((a, j) => (
+              <div class="map-a rv" data-rv data-a={j} style={`--rv-delay:${120 + j * 50}ms`}>
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>
+                {a}
+              </div>
+            ))
+          }
         </div>
       </div>
     </div>
@@ -1377,6 +1371,20 @@ const faqs = [
   }
   .split-head .h2 {
     max-width: 24ch;
+  }
+  /* Marks the offering sections, so they read apart from the research. */
+  .svc {
+    display: block;
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    font-size: 9.9px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--coral-700);
+  }
+  .dark .svc {
+    color: var(--on-dark);
   }
   .h2-note {
     font-style: italic;
@@ -2047,14 +2055,14 @@ const faqs = [
     background: var(--coral);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 1600ms var(--ease) 100ms;
+    transition: transform 900ms var(--ease) 100ms;
   }
   .chain[data-on='true'] .chain-line span {
     transform: scaleX(1);
   }
   .chain-step {
     position: relative;
-    transition: opacity 700ms var(--ease) calc(2200ms + var(--i) * 80ms);
+    transition: opacity 500ms var(--ease) calc(900ms + var(--i) * 60ms);
   }
   .chain-icon {
     position: relative;
@@ -2066,8 +2074,8 @@ const faqs = [
     background: var(--surface);
     border: 1px solid var(--line-2);
     transition:
-      color 500ms var(--ease) calc(var(--i) * 380ms + 200ms),
-      border-color 500ms var(--ease) calc(var(--i) * 380ms + 200ms);
+      color 500ms var(--ease) calc(var(--i) * 160ms + 150ms),
+      border-color 500ms var(--ease) calc(var(--i) * 160ms + 150ms);
   }
   .chain[data-on='true'] .chain-icon {
     color: var(--coral-700);
@@ -2114,7 +2122,7 @@ const faqs = [
     box-shadow: 0 0 0 5px hsl(178 62% 42% / 0.14);
     transform: scaleY(0);
     transform-origin: top;
-    transition: transform 700ms var(--ease) 1900ms;
+    transition: transform 500ms var(--ease) 750ms;
   }
   .chain-cut-label {
     position: absolute;
@@ -2131,7 +2139,7 @@ const faqs = [
     color: #fff;
     background: var(--teal-700);
     opacity: 0;
-    transition: opacity 500ms var(--ease) 2400ms;
+    transition: opacity 400ms var(--ease) 1000ms;
   }
   .chain[data-on='true'] .chain-cut-bar {
     transform: scaleY(1);
@@ -2213,19 +2221,58 @@ const faqs = [
   }
   /* A small gate on each cell's top edge: the guardrail sits on
      whatever the AI touches. */
+  /* One teal line runs along the top of the row, tile to tile, and
+     each icon lights as the line reaches it. */
+  .touch {
+    --d: 200ms;
+  }
+  .touch:nth-child(2) { --d: 500ms; }
+  .touch:nth-child(3) { --d: 800ms; }
+  .touch:nth-child(4) { --d: 1100ms; }
   .touch-gate {
     position: absolute;
     top: -1px;
-    left: 24px;
-    width: 34px;
-    height: 3px;
+    left: 0;
+    width: calc(100% + 1px);
+    height: 2px;
     background: var(--teal-500);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 700ms var(--ease) 500ms;
+    transition: transform 300ms linear var(--d);
+  }
+  .touch-icon {
+    color: var(--n-300);
+    transition: color 400ms var(--ease) calc(var(--d) + 100ms);
   }
   .touch.rv[data-visible='true'] .touch-gate {
     transform: scaleX(1);
+  }
+  .touch.rv[data-visible='true'] .touch-icon {
+    color: var(--coral);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .touch-gate,
+    .touch-icon {
+      transition: none;
+    }
+  }
+  .sub-h.sub-h-lead {
+    margin-top: 56px;
+    font-family: var(--hero-serif);
+    font-size: clamp(19px, 1.8vw, 22px);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--ink);
+  }
+  .flow + .sub-h.sub-h-lead {
+    margin-top: 76px;
+  }
+  .sub-h-lead + .map {
+    margin-top: 26px;
+  }
+  .sub-h-lead + .touches {
+    margin-top: 18px;
   }
   .sub-h {
     margin-top: 56px;
@@ -3055,7 +3102,7 @@ const faqs = [
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
     transition:
-      stroke-dashoffset 1200ms var(--ease),
+      stroke-dashoffset 1000ms var(--ease),
       stroke 400ms var(--ease),
       opacity 400ms var(--ease);
   }
@@ -3196,7 +3243,11 @@ const faqs = [
     font-size: 18px;
     letter-spacing: -0.01em;
   }
+  .lane-diy .lane-name {
+    color: var(--ink-3);
+  }
   .lane-us .lane-name {
+    font-weight: 600;
     color: var(--teal-700);
   }
   .lane-track {
@@ -3222,7 +3273,7 @@ const faqs = [
     color: var(--ink-2);
     background: var(--n-200);
     clip-path: inset(0 100% 0 0);
-    transition: clip-path 800ms var(--ease) calc(var(--i) * 420ms + 150ms);
+    transition: clip-path 600ms var(--ease) calc(var(--i) * 140ms + 100ms);
   }
   .seg b {
     font-family: var(--mono);
@@ -3275,7 +3326,7 @@ const faqs = [
     white-space: nowrap;
     color: var(--amber-800);
     opacity: 0;
-    transition: opacity 500ms var(--ease) 1100ms;
+    transition: opacity 400ms var(--ease) 500ms;
   }
   .flag::before {
     content: '';
@@ -3305,7 +3356,7 @@ const faqs = [
     text-align: center;
     color: var(--teal-700);
     opacity: 0;
-    transition: opacity 500ms var(--ease) 1300ms;
+    transition: opacity 400ms var(--ease) 650ms;
   }
   .lanes[data-on='true'] .brace {
     opacity: 1;
@@ -3463,7 +3514,7 @@ const faqs = [
     background: var(--coral);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 2400ms var(--ease) 200ms;
+    transition: transform 1100ms var(--ease) 100ms;
   }
   .flow[data-on='true'] .flow-steps::after {
     transform: scaleX(1);
@@ -3483,9 +3534,9 @@ const faqs = [
     background: var(--surface);
     border: 1.5px solid var(--line-2);
     transition:
-      color 500ms var(--ease) calc(var(--i) * 480ms + 300ms),
-      background 500ms var(--ease) calc(var(--i) * 480ms + 300ms),
-      border-color 500ms var(--ease) calc(var(--i) * 480ms + 300ms);
+      color 500ms var(--ease) calc(var(--i) * 150ms + 150ms),
+      background 500ms var(--ease) calc(var(--i) * 150ms + 150ms),
+      border-color 500ms var(--ease) calc(var(--i) * 150ms + 150ms);
   }
   .flow-node svg {
     display: block;
@@ -3524,8 +3575,8 @@ const faqs = [
     opacity: 0;
     transform: translateY(6px);
     transition:
-      opacity 500ms var(--ease) calc(var(--i) * 480ms + 600ms),
-      transform 500ms var(--ease) calc(var(--i) * 480ms + 600ms);
+      opacity 500ms var(--ease) calc(var(--i) * 150ms + 350ms),
+      transform 500ms var(--ease) calc(var(--i) * 150ms + 350ms);
   }
   .flow[data-on='true'] .flow-out {
     opacity: 1;
@@ -3540,7 +3591,7 @@ const faqs = [
     border: 1.5px dashed var(--coral);
     border-top: 0;
     opacity: 0;
-    transition: opacity 600ms var(--ease) 2600ms;
+    transition: opacity 500ms var(--ease) 1100ms;
   }
   .flow-loop::before {
     content: '';
